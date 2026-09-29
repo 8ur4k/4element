@@ -1,0 +1,47 @@
+// ============================================================
+//  21: Genel kategori kuralları (#etiket). Yazılı özel tarifler her zaman önceliklidir.
+// ============================================================
+
+== Genel Kurallar #8a8fa8
+Meyveli Pasta = #meyve + Pasta
+Meyveli Kek {cake+cherry #e8a060} = #meyve + Kek
+Meyveli Dondurma {icecream+cherry #f8b0c8} = #meyve + Dondurma
+Meyveli Yoğurt {bowl+cherry #f8d0e0} = #meyve + Yoğurt | Yoğurt + Meyve
+Meyve Şarabı {bottle+cherry #8a2a4a} = #meyve + Maya | Meyve + Maya
+Meyveli Soda {bottle+cherry #f0a0c0} = #meyve + Soda | Soda + Meyve
+Meyveli Çay {teaglass+cherry #d8604a} = #meyve + Çay | Çay + Meyve
+Meyve Tabağı {plate+apple #e87a5a} = #meyve + Tabak | Meyve + Tabak
+Meyve Tatlısı {cake+apple #e89060} = #meyve + Tatlı | Meyve + Tatlı
+Sebze Yemeği {pot+carrot #b8803a} = #sebze + Tencere | Sebze + Tencere
+Sebze Kızartması {pan+carrot #e8a040} = #sebze + Kızartma | Sebze + Kızartma
+Dolma = #sebze + İç Pilav
+Zeytinyağlı = #sebze + Zeytinyağı
+Sebze Çorbası = #sebze + Çorba
+Sebze Güveci {pot+fire #c86a3a} = #sebze + Güveç | Sebze + Güveç*
+Izgara Sebze {pan+leaf #6ab04a} = #sebze + Izgara | Sebze + Izgara | #sebze + Mangal
+Kurutulmuş Sebze {carrot+sun #c89040} = #sebze + Kurutma | Sebze + Kurutma
+Balık Izgara = #balık + Izgara | #balık + Mangal
+Balık Tava {fish+pan #d8b060} = #balık + Tava | #balık + Kızartma | Balık + Tava
+Balık Buğulama {fish+steam #9ac0d8} = #balık + Buhar | Balık + Buhar
+Baharatlı Et {meat+pepper #b8402a} = #baharat + Et | Baharat + Et
+Baharatlı Tavuk {chicken+pepper #d8702a} = #baharat + Tavuk Eti | Baharat + Tavuk Eti
+Baharat Karışımı = #baharat + Baharat
+Renk Karışımı {palette+refresh #c86ae8} = #renk + #renk | Renk + Karışım
+Renkli Kumaş {cloth+palette #d86ab8} = #renk + Kumaş | Renk + Kumaş
+Renkli Kağıt {paper+palette #e87ab8} = #renk + Kağıt | Renk + Kağıt
+Boyalı Duvar {wall+palette #d87a9a} = #renk + Duvar | Boya + Duvar*
+Renkli Kalem {pencil+palette #e8703a} = #renk + Kalem | Renk + Kurşun Kalem
+Yavru = #memeli + Bebek
+Hayvan Barınağı = #evcil + Bina | #evcil + Kulübe
+Veteriner = #evcil + Doktor | #çiftlik + Doktor
+Çiftlik = #çiftlik + Çit
+Sürü = #çiftlik + #çiftlik
+Kuş Kafesi {fence+bird #c8b890} = Kafes + Tüy | Kafes + Yuva
+Kuş Yemi {seed+bird #d8b870} = #kuş + Tohum | Kuş + Tohum
+Balık Yemi {dust+fish #c8a870} = #balık + Toz | Balık + Toz
+Belgesel Film {film+paw #4a8a5a} = #hayvan + Kamera | Hayvan + Kamera
+Hayvan Fotoğrafı {camera+paw #5a9a6a} = #hayvan + Fotoğraf Makinesi | Hayvan + Fotoğraf Makinesi
+Böcek Koleksiyonu {box+ant #8a9a3a} = #böcek + Kutu | #böcek + Kavanoz | Böcek + Kavanoz
+Deniz Akvaryumu {pane+waves #2aa0c8} = #deniz + Akvaryum | #deniz + Cam
+Timsah Gözyaşı {drop+lizard #6a8a5a} = Timsah + Gözyaşı | Timsah + Ağlama
+Ağlama {drop+person #7ab0e0} = Gözyaşı + İnsan | Üzüntü + Göz | Bebek + Ses

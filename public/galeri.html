@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>İkon Galerisi</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { overflow: auto; display: block; padding: 20px; user-select: text; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    p { color: var(--muted); margin: 0 0 16px; }
+    .bar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .bar input { height: 36px; padding: 0 12px; background: var(--bg2); border: 1px solid var(--line2); border-radius: 10px; color: var(--text); font: inherit; width: 280px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+    .cell { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; text-align: center; color: #cfd4e0; }
+    .cell small { color: var(--faint); font-size: 10px; }
+    .cell .ico { --s: 52px; }
+  </style>
+</head>
+<body>
+  <h1>İkon Galerisi</h1>
+  <p id="info">Yükleniyor…</p>
+  <div class="bar">
+    <button class="btn" data-mode="items">Öğeler</button>
+    <button class="btn" data-mode="glyphs">Glifler</button>
+    <input id="q" placeholder="Ara…">
+  </div>
+  <div class="grid" id="grid"></div>
+  <script type="module">
+    import { GLYPHS } from './js/glyphs.js';
+    import { iconHTML } from './js/icons.js';
+    const lib = await (await fetch('library.json')).json();
+    const grid = document.getElementById('grid');
+    let mode = new URLSearchParams(location.search).get('mode') || 'items';
+    const lower = s => s.toLocaleLowerCase('tr-TR');
+    function render() {
+      const q = lower(document.getElementById('q').value.trim());
+      let html = '';
+      if (mode === 'glyphs') {
+        const names = Object.keys(GLYPHS).filter(n => !q || n.includes(q));
+        document.getElementById('info').textContent = `${names.length} glif`;
+        html = names.map(n => `<div class="cell">${iconHTML({ g: n, c: '#5a6ab8' })}<span>${n}</span></div>`).join('');
+      } else {
+        const items = lib.items.filter(it => !q || lower(it.n).includes(q));
+        document.getElementById('info').textContent = `${items.length} / ${lib.items.length} öğe`;
+        html = items.slice(0, 1500).map(it => `<div class="cell">${iconHTML(it)}<span>${it.n}</span><small>${it.s} adım</small></div>`).join('');
+      }
+      grid.innerHTML = html;
+    }
+    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { mode = b.dataset.mode; render(); });
+    document.getElementById('q').oninput = render;
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+// ============================================================
+//  20: Aile genişlemeleri — meyve ağaçları, sular, reçeller, çaylar,
+//      dolmalar, börekler, pideler, turşular, çorbalar, tatlılar...
+// ============================================================
+
+== Meyve Ağaçları #5aa03a
+Elma Ağacı {tree+apple #4a9a3a} = Elma + Toprak | Elma + Ağaç | Elma + Fidan
+Armut Ağacı {tree+pear #5aa040} = Armut + Toprak | Armut + Ağaç | Armut + Fidan
+Ayva Ağacı {tree+pear #6aa040} = Ayva + Toprak | Ayva + Ağaç | Ayva + Fidan
+Kiraz Ağacı {tree+cherry #4a9a3a} = Kiraz + Toprak | Kiraz + Ağaç | Kiraz + Fidan
+Vişne Ağacı {tree+cherry #3a8a3a} = Vişne + Toprak | Vişne + Ağaç | Vişne + Fidan
+Erik Ağacı {tree+grape #5a9a4a} = Erik + Toprak | Erik + Ağaç | Erik + Fidan
+Kayısı Ağacı {tree+star #5aa03a} = Kayısı + Toprak | Kayısı + Ağaç | Kayısı + Fidan
+Şeftali Ağacı {tree+heart #6aa84a} = Şeftali + Toprak | Şeftali + Ağaç | Şeftali + Fidan
+Nar Ağacı {tree+crown #4a8a3a} = Nar + Toprak | Nar + Ağaç | Nar + Fidan
+İncir Ağacı {tree+drop #4a7a3a} = İncir + Toprak | İncir + Ağaç | İncir + Fidan
+Portakal Ağacı {tree+citrus #3a9a4a} = Portakal + Toprak | Portakal + Ağaç | Portakal + Fidan
+Mandalina Ağacı {tree+minus #4aa04a} = Mandalina + Toprak | Mandalina + Ağaç
+Limon Ağacı {tree+citrus #5ab04a} = Limon + Toprak | Limon + Ağaç | Limon + Fidan
+Muz Ağacı {palm+banana #5ab83a} = Muz + Toprak | Muz + Ağaç | Muz + Palmiye
+Ceviz Ağacı {tree+brain #3a7a3a} = Ceviz + Toprak | Ceviz + Ağaç | Ceviz + Fidan
+Fındık Ocağı {grass+nut #5a8a3a} = Fındık + Toprak | Fındık + Çalı | Fındık + Fidan
+Badem Ağacı {tree+flower #6ab04a} = Badem + Toprak | Badem + Ağaç | Badem + Çiçek*
+Kestane Ağacı {tree+hedgehog #3a6a2a} = Kestane + Toprak | Kestane + Ağaç | Kestane + Fidan
+Fıstık Ağacı {tree+leaf #6a9a3a} = Antep Fıstığı + Toprak | Antep Fıstığı + Ağaç
+Hurma Ağacı {palm+nut #5a8a3a} = Hurma + Toprak | Hurma + Palmiye*
+Avokado Ağacı {tree+pear #3a7a3a} = Avokado + Toprak | Avokado + Ağaç
+Mango Ağacı {palm+sun #4a8a3a} = Mango + Toprak | Mango + Ağaç
+Çilek Tarlası {berry+fence #4a9a3a} = Çilek + Toprak | Çilek + Tarla | Çilek + Çilek
+Karpuz Tarlası {melon+fence #4aa04a} = Karpuz + Toprak | Karpuz + Tarla | Karpuz + Karpuz
+Kavun Tarlası {melon+plus #6ab04a} = Kavun + Toprak | Kavun + Tarla
+Domates Tarlası {tomato+fence #4a9a3a} = Domates + Toprak | Domates + Tarla
+Ayçiçeği Tarlası {sun+fence #e8c020} = Ayçiçeği + Tarla | Ayçiçeği + Ayçiçeği | Ayçiçeği + Toprak
+Lale Bahçesi {tulip+fence #e8405a} = Lale + Bahçe | Lale + Lale | Lale + Toprak
+Gül Bahçesi {heart+fence #e8305a} = Gül + Bahçe | Gül + Gül* | Gül + Toprak
+Lavanta Tarlası {flower+wheat #9a7ad9} = Lavanta + Tarla | Lavanta + Lavanta | Lavanta + Toprak
+Çay Bahçesi {teaglass+fence #3a8a3a} = Çay Bitkisi + Tarla | Çay Bitkisi + Tepe | Çay + Bahçe
+Pamuk Tarlası {cloud+fence #f0f0f0} = Pamuk + Tarla | Pamuk + Toprak | Pamuk + Pamuk
+Mısır Tarlası {corn+fence #e8c030} = Mısır + Tarla | Mısır + Toprak | Mısır + Mısır
+Buğday Tarlası {wheat+fence #e0b040} = Buğday + Tarla | Buğday + Buğday* | Buğday + Toprak
+Pirinç Tarlası {seed+waves #7ac06a} = Pirinç + Tarla | Pirinç + Bataklık
+
+== Meyve Suları #f0902a
+Elma Suyu {glass+apple #f0c040} = Elma + Sıkacak | Elma + Su | Elma + Pres
+Armut Suyu {glass+pear #e0d060} = Armut + Sıkacak | Armut + Su | Armut + Pres
+Vişne Suyu {glass+cherry #a0102a} = Vişne + Sıkacak | Vişne + Su | Vişne + Pres
+Şeftali Suyu {glass+heart #f8b070} = Şeftali + Sıkacak | Şeftali + Su | Şeftali + Pres
+Kayısı Suyu {glass+sun #f0a030} = Kayısı + Sıkacak | Kayısı + Su | Kayısı + Pres
+Ananas Suyu {glass+crown #f0d030} = Ananas + Sıkacak | Ananas + Su | Ananas + Pres
+Mango Suyu {glass+sun #f8b030} = Mango + Sıkacak | Mango + Su
+Greyfurt Suyu {glass+citrus #f07060} = Greyfurt + Sıkacak | Greyfurt + Su
+Mandalina Suyu {glass+minus #f8a030} = Mandalina + Sıkacak | Mandalina + Su
+Karpuz Suyu {glass+melon #e8404a} = Karpuz + Sıkacak | Karpuz + Blender*
+Havuç Suyu {glass+carrot #f07a1a} = Havuç + Sıkacak | Havuç + Su | Havuç + Pres
+Domates Suyu {glass+tomato #d8302a} = Domates + Sıkacak | Domates + Su | Domates + Pres
+Çilek Suyu {glass+berry #e83a5a} = Çilek + Sıkacak | Çilek + Su
+Kivi Suyu {glass+leaf #8ac040} = Kivi + Sıkacak | Kivi + Su
+Hindistan Cevizi Suyu {glass+palm #f0ecd8} = Hindistan Cevizi + Pipet | Hindistan Cevizi + Bıçak | Hindistan Cevizi + Su
+Pipet {log+drop #f06a8a} = Plastik + Tüp | Tüp + İçecek | Plastik + Boru*
+Karışık Meyve Suyu {glass+rainbow #f0803a} = Meyve Suyu + Meyve Suyu | Meyve Suyu + Karışım
+Limonlu Soda {bottle+citrus #e8f080} = Soda + Limon | Limonata + Soda
+Taze Sıkma Portakal {glass+sparkle #f8a020} = Portakal Suyu + Sıkma | Portakal + Sıkma
+Portakal Suyu = Portakal + Sıkacak | Portakal + Su
+
+== Reçel ve Marmelat #c8303a
+Çilek Reçeli {jar+berry #d82a4a} = Çilek + Şeker | Çilek + Reçel | Çilek + Kavanoz
+Vişne Reçeli {jar+cherry #901a2a} = Vişne + Şeker | Vişne + Reçel | Vişne + Kavanoz
+Kiraz Reçeli {jar+cherry #c81a3a} = Kiraz + Şeker | Kiraz + Reçel | Kiraz + Kavanoz
+Kayısı Reçeli {jar+sun #f0a030} = Kayısı + Şeker | Kayısı + Reçel | Kayısı + Kavanoz
+İncir Reçeli {jar+pear #7a4a6a} = İncir + Şeker | İncir + Reçel | İncir + Kavanoz
+Ayva Reçeli {jar+pear #e89040} = Ayva + Şeker | Ayva + Reçel | Ayva + Kavanoz
+Erik Reçeli {jar+moon #7a2a6a} = Erik + Şeker | Erik + Reçel | Erik + Kavanoz
+Böğürtlen Reçeli {jar+night #3a1a3a} = Böğürtlen + Şeker | Böğürtlen + Reçel
+Ahududu Reçeli {jar+berry #c8305a} = Ahududu + Şeker | Ahududu + Reçel
+Şeftali Reçeli {jar+heart #f8a070} = Şeftali + Şeker | Şeftali + Reçel
+Gül Reçeli {jar+flower #e8508a} = Gül + Şeker | Gül + Reçel | Gül Yaprağı + Şeker
+Gül Yaprağı {leaf+flower #f06a9a} = Gül + Yaprak | Gül + Makas | Gül + Rüzgar
+Dut Pekmezi {jar+tree #3a0a1a} = Dut + Kaynatma | Dut + Pekmez | Dut + Kazan
+Karadut Şurubu {bottle+grape #2a0a1a} = Dut + Şurup | Dut + Şeker | Dut + Siyah
+Portakal Kabuğu Reçeli {jar+citrus #f89030} = Portakal + Kabuk | Marmelat + Kabuk
+Patlıcan Reçeli {jar+sugar #4a1a3a} = Patlıcan + Şeker | Patlıcan + Reçel
+Ceviz Reçeli {jar+brain #3a2a1a} = Ceviz + Şeker | Ceviz + Reçel
+Kestane Şekeri {candy+nut #8a4a2a} = Kestane + Şeker | Kestane + Şurup | Kestane + Bursa
+Reçelli Ekmek {bread+jar #d8603a} = Ekmek + Reçel | Kızarmış Ekmek + Reçel
+Tereyağlı Ballı Ekmek {bread+honey #f0b040} = Ekmek + Bal | Bal + Tereyağı
+Bal Kaymak {cheese+honey #f8d070} = Bal + Kaymak | Kaymak + Bal*
+Kuru Erik {grape+sun #4a1a3a} = Erik + Güneş | Erik + Kurutma
+Kuru Dut {grape+sun #d8c8b0} = Dut + Güneş | Dut + Kurutma
+Elma Kurusu {apple+minus #d88a3a} = Elma + Güneş | Elma + Kurutma
+Muz Cipsi {banana+sun #f0d060} = Muz + Kurutma | Muz + Dilim | Muz + Kızartma
+Pestil {plank+apple #8a3a2a} = Dut Pekmezi + Güneş | Pekmez + Kurutma | Meyve + Yassı
+Köme {rope+nut #7a3a2a} = Pestil + Ceviz | Pekmez + Ceviz | Ceviz + İp
+Cevizli Sucuk {rope+brain #6a2a1a} = Ceviz + Pekmez | Köme + Ceviz* | Ceviz + Şıra
+
+== Dondurma ve Pastalar #f8a0c0
+Çilekli Dondurma {icecream+berry #f8a0b8} = Dondurma + Çilek | Çilek + Buz* | Dondurma + Pembe
+Limonlu Dondurma {icecream+citrus #f8f0a0} = Dondurma + Limon | Limon + Buz* | Dondurma + Sarı*
+Vişneli Dondurma {icecream+cherry #b8203a} = Dondurma + Vişne
+Fıstıklı Dondurma {icecream+leaf #a8d080} = Dondurma + Antep Fıstığı | Dondurma + Fıstık
+Çikolatalı Dondurma {icecream+candy #6a3a2a} = Dondurma + Çikolata | Dondurma + Kakao
+Muzlu Dondurma {icecream+banana #f8e080} = Dondurma + Muz
+Kavunlu Dondurma {icecream+melon #f8d090} = Dondurma + Kavun
+Vanilyalı Dondurma {icecream+flower #fff4d8} = Dondurma + Vanilya
+Kaymaklı Dondurma {icecream+cloud #fffaf0} = Dondurma + Kaymak
+Dondurma Külahı {icecream+cone #e8c080} = Dondurma + Külah | Külah + Top Dondurma
+Top Dondurma {icecream+dice #f8c8d8} = Dondurma + Kaşık | Dondurma + Top
+Çubuk Dondurma {icecream+log #f8a8c8} = Dondurma + Çubuk | Dondurma + Sopa
+Dondurmacı {person+icecream #f8b0d0} = İnsan + Dondurma | Dondurma + Dükkan | Maraş Dondurması + İnsan
+Çilekli Pasta {cake+berry #f890a8} = Pasta + Çilek | Kek + Çilek
+Çikolatalı Pasta {cake+candy #5a2a1a} = Pasta + Çikolata | Pasta + Kakao
+Meyveli Pasta {cake+apple #f0a060} = Pasta + Meyve | Pasta + Meyve Salatası
+Muzlu Pasta {cake+banana #f8d870} = Pasta + Muz | Kek + Muz
+Frambuazlı Pasta {cake+plus #e84a7a} = Pasta + Ahududu | Kek + Ahududu
+Havuçlu Kek {cake+carrot #e8903a} = Kek + Havuç | Havuç + Hamur
+Elmalı Turta {cake+apple #d88a3a} = Kek + Elma | Hamur + Elma | Elma + Tarçın
+Limonlu Kek {cake+citrus #f8e060} = Kek + Limon | Limon + Hamur
+Kakaolu Kek {cake+coffee #6a3a2a} = Kek + Kakao
+Mozaik Pasta {cake+box #5a3a2a} = Bisküvi + Çikolata | Bisküvi + Kakao | Pasta + Bisküvi
+Profiterol {cake+cloud #6a3a2a} = Hamur Topu + Çikolata | Kremalı Pasta + Çikolata | Krema + Hamur Topu
+Hamur Topu {bread+dice #f0d8a0} = Hamur + Top | Hamur + Yuvarlama
+Yuvarlama {ball+hand #c8b8a8} = El + Top | Top + Hareket | Hamur + El*
+Ekler {bread+candy #d8a060} = Hamur + Krema | Hamur Topu + Krema | Hamur + Çikolata*
+Kek Dilimi {cake+knife #e0a860} = Kek + Bıçak | Kek + Dilim
+
+== Çaylar #7a9a3a
+Elma Çayı {teaglass+apple #d8403a} = Elma + Çay | Elma + Sıcak Su | Elma Kurusu + Sıcak Su
+Nane Limon {teaglass+citrus #9ad060} = Nane + Limon | Nane + Çay | Limon + Bitki Çayı
+Papatya Çayı {teaglass+sun #f0e080} = Papatya + Çay | Papatya + Sıcak Su | Papatya + Bitki Çayı
+Kuşburnu {cherry+hedgehog #d8401a} = Gül + Meyve | Gül + Kırmızı* | Çalı + Kırmızı
+Kuşburnu Çayı {teaglass+cherry #c8301a} = Kuşburnu + Çay | Kuşburnu + Sıcak Su
+Rezene {leaf+seed #9ac060} = Dereotu + Tohum | Anason + Bitki | Dereotu + Çay
+Rezene Çayı {teaglass+seed #a0c870} = Rezene + Çay | Rezene + Sıcak Su
+Zencefil Çayı {teaglass+nut #e0b060} = Zencefil + Çay | Zencefil + Sıcak Su
+Tarçınlı Çay {teaglass+log #b0602a} = Tarçın + Çay | Tarçın + Sıcak Su
+Kekik Çayı {teaglass+mountain #6a8a4a} = Kekik + Çay | Kekik + Sıcak Su
+Lavanta Çayı {teaglass+sparkle #9a7ad9} = Lavanta + Çay | Lavanta + Sıcak Su
+Yasemin Çayı {teaglass+note #f8f0d8} = Yasemin + Çay | Yasemin + Sıcak Su
+Hibiskus {flower+palm #e8205a} = Çiçek + Tropikal | Çiçek + Hawaii | Gül + Tropikal
+Hibiskus Çayı {teaglass+palm #c8103a} = Hibiskus + Çay | Hibiskus + Sıcak Su
+Beyaz Çay {teaglass+cloud #f0ecd8} = Çay + Beyaz | Çay Bitkisi + Tomurcuk
+Siyah Çay {teaglass+night #6a1a0a} = Çay + Siyah | Çay Bitkisi + Mayalanma | Çay + Mayalanma
+Rize Çayı {teaglass+mountain #a8301a} = Çay + Rize | Çay + Karadeniz | Kaynar Çay + Rize
+Açık Çay {teaglass+sun #d8702a} = Çay + Su | Kaynar Çay + Su
+Tavşan Kanı Çay {teaglass+drop #8a0a0a} = Kaynar Çay + Tavşan | Kaynar Çay + Zaman | Kaynar Çay + Koyuluk
+Çay Keyfi {teaglass+heart #b8401a} = Çay + Simit | Kaynar Çay + Arkadaş | Çay + Huzur
+
+== Dolmalar ve Sarmalar #6ab040
+Kabak Dolması {pepper+seed #8ac050} = Kabak + İç Pilav | Kabak + Dolma | Kabak + Kıyma
+Patlıcan Dolması {pepper+seed #5a2a5a} = Patlıcan + İç Pilav | Patlıcan + Dolma
+Domates Dolması {tomato+seed #e8403a} = Domates + İç Pilav | Domates + Dolma | Domates + Kıyma
+Enginar Dolması {flower+seed #6a9a5a} = Enginar + İç Pilav | Enginar + Dolma
+Kuru Dolma {pepper+sun #9a4a3a} = Dolma + Kurutma | Kuru Patlıcan + İç Pilav
+Kuru Patlıcan {pepper+sun #4a2a3a} = Patlıcan + Kurutma | Patlıcan + Güneş | Patlıcan + İp
+Yaprak Sarma {leaf+refresh #4a8a3a} = Sarma + Zeytinyağı | Asma Yaprağı + Pirinç | Sarma + Limon
+Pazı Sarması {leaf+meat #3a7a3a} = Pazı + Sarmak | Pazı + Pilav | Pazı + Kıyma
+Karalahana Sarması {leaf+fish #2a5a3a} = Lahana + Karadeniz | Lahana Sarması + Karadeniz | Lahana + Hamsi
+
+== Börekler ve Pideler #e8b050
+Peynirli Börek {bread+milk #f8d070} = Börek + Peynir | Yufka + Beyaz Peynir
+Kıymalı Börek {meat+bread #d88a3a} = Börek + Kıyma | Yufka + Kıyma*
+Ispanaklı Börek {bread+leaf #6aa040} = Börek + Ispanak | Yufka + Ispanak*
+Patatesli Börek {bread+nut #e8b860} = Börek + Patates | Yufka + Patates
+Kol Böreği = Börek + Rulo
+Çiğ Börek {bread+drop #f0c860} = Börek + Kızartma | Yufka + Kızartma
+Talaş Böreği {bread+star #f0c070} = Börek + Talaş Hamuru | Milföy + Et
+Milföy {bread+plank #f8e0a0} = Hamur + Katman | Yufka + Tereyağı
+Talaş Hamuru {bread+plank #f0d8a0} = Milföy + Et* | Milföy + Katman
+Kaşarlı Pide {plank+cheese #f8c040} = Pide + Kaşar | Pide + Peynir
+Kıymalı Pide {plank+meat #c86a3a} = Pide + Kıyma
+Kuşbaşılı Pide {bread+dice #b85a2a} = Pide + Kuşbaşı | Pide + Et
+Kuşbaşı {meat+dice #b84a2a} = Et + Küp | Kırmızı Et + Küp
+Karışık Pide {bread+rainbow #d8703a} = Kaşarlı Pide + Kıymalı Pide | Pide + Karışım | Sucuklu Pide + Kaşar
+Sucuklu Pide {bread+rope #c84a2a} = Pide + Sucuk | Kaşarlı Pide + Sucuk
+Yumurtalı Pide {bread+egg #f8d060} = Pide + Yumurta | Pide + Sahanda Yumurta
+Karadeniz Pidesi {bread+fish #e8a040} = Pide + Karadeniz | Pide + Uzunluk*
+Peynirli Gözleme {bread+sparkle #f8d880} = Gözleme + Peynir
+Patatesli Gözleme {bread+nut #f0c070} = Gözleme + Patates
+Ispanaklı Gözleme {bread+leaf #7ab050} = Gözleme + Ispanak
+Kıymalı Gözleme {pan+meat #d8804a} = Gözleme + Kıyma
+
+== Turşular #8ab040
+Salatalık Turşusu {pepper+jar #8ab040} = Salatalık + Sirke | Salatalık + Turşu | Salatalık + Salamura
+Lahana Turşusu {jar+leaf #b8d080} = Lahana + Sirke | Lahana + Turşu | Lahana + Salamura
+Biber Turşusu {jar+star #6aa03a} = Biber + Sirke | Biber + Turşu
+Havuç Turşusu {jar+carrot #e8802a} = Havuç + Sirke | Havuç + Turşu
+Pancar Turşusu {jar+tomato #9a1a4a} = Pancar + Sirke | Pancar + Turşu
+Karışık Turşu {jar+rainbow #b8b040} = Turşu + Turşu | Turşu + Karışım | Salatalık Turşusu + Lahana Turşusu
+Zeytin Salamurası {jar+nut #6a7a3a} = Zeytin + Salamura | Zeytin + Tuzlu Su | Siyah Zeytin + Kavanoz
+Turşucu {shop+jar #8aa040} = Turşu + Dükkan | Turşu Suyu + Dükkan
+
+== Çorbalar #e0903a
+Sebze Çorbası {soup+carrot #d8903a} = Sebze + Çorba | Sebze + Kaynatma | Havuç + Çorba
+Mantar Çorbası {soup+mushroom #d8c0a0} = Mantar + Çorba | Mantar + Krema
+Brokoli Çorbası {soup+tree #6aa040} = Brokoli + Çorba | Brokoli + Kaynatma
+Balkabağı Çorbası {soup+tomato #f08030} = Balkabağı + Çorba | Balkabağı + Kaynatma
+Patates Çorbası {soup+nut #e8c870} = Patates + Çorba | Patates + Kaynatma
+Soğan Çorbası {soup+tomato #d8a870} = Soğan + Çorba | Soğan + Fransa
+Şehriye {noodle+minus #f0d890} = Makarna + Küçük | Erişte + Küçük | Hamur + Pirinç*
+Şehriye Çorbası {soup+noodle #f0c060} = Şehriye + Çorba | Şehriye + Tavuk Suyu Çorbası | Şehriye + Domates
+Düğün Çorbası {soup+ring #f8e8c8} = Çorba + Düğün
+Tutmaç Çorbası {soup+bread #e8c890} = Erişte + Yoğurt | Erişte + Çorba | Mantı + Çorba*
+Toyga Çorbası {soup+leaf #e8e0b8} = Yayla Çorbası + Nane* | Yoğurt + Buğday* | Çorba + Toyga
+Toyga {wheat+milk #e8d8b0} = Buğday + Yoğurt | Yarma + Yoğurt
+Yarma {wheat+knife #d8b880} = Buğday + Kırık | Buğday + Havan
+Beyran {soup+pepper #b8401a} = Kuzu + Çorba | Çorba + Gaziantep
+
+== Salatalar #6ac04a
+Çoban Salatası {bowl+tomato #e84a3a} = Domates + Salatalık | Salata + Çoban | Salata + Biber
+Mevsim Salatası {bowl+leaf #6ac050} = Salata + Mevsim | Marul + Havuç | Salata + Marul
+Patates Salatası {bowl+nut #e8c870} = Patates + Salata | Patates + Mayonez | Patates + Maydanoz
+Piyaz {seed+tomato #f0e0b0} = Kuru Fasulye + Soğan | Kuru Fasulye + Salata | Kuru Fasulye + Tahin
+Gavurdağı Salatası {bowl+nut #d84a3a} = Çoban Salatası + Ceviz | Çoban Salatası + Nar Ekşisi | Salata + Nar Ekşisi
+Ton Balıklı Salata {bowl+fish #6a9ac0} = Ton Balığı + Salata | Salata + Konserve
+Tavuklu Salata {bowl+chicken #f0d0a0} = Tavuk Eti + Salata | Tavuk Göğsü + Salata
+Makarna Salatası {bowl+noodle #f0d880} = Makarna + Salata | Makarna + Mayonez
+Meze {plate+plate #d8a060} = Haydari + Humus | Cacık + Ezme | Zeytinyağlı + Tabak | Meze Tabağı + Meze
+Meze Tabağı {plate+nut #c89060} = Tabak + Meze | Tabak + Zeytinyağlı | Haydari + Tabak
+
+== Kızartmalar ve Kebaplar #b8602a
+Patlıcan Kızartması {pan+night #5a2a4a} = Patlıcan + Kızartma | Patlıcan + Yağ
+Kabak Kızartması {pan+sun #8ab050} = Kabak + Kızartma | Kabak + Yağ
+Biber Kızartması {pan+pepper #6aa03a} = Biber + Kızartma | Biber + Yağ
+Karnabahar Kızartması {cloud+fire #e8d8a8} = Karnabahar + Kızartma | Karnabahar + Yumurta
+Mücver {pepper+pan #8ab050} = Kabak + Yumurta | Kabak + Un | Kabak Kızartması + Yumurta
+Kabak Çiçeği Dolması {flower+seed #f0b030} = Kabak Çiçeği + İç Pilav | Kabak Çiçeği + Pilav | Kabak Çiçeği + Dolma
+Kabak Çiçeği {flower+pepper #f8c030} = Kabak + Çiçek | Kabak + İlkbahar
+Patlıcan Kebabı {skewer+pepper #6a2a3a} = Patlıcan + Kebap | Patlıcan + Şiş
+Orman Kebabı {pot+tree #7a4a2a} = Kebap + Orman | Et + Bezelye
+Testi Kebabı {vase+meat #b8603a} = Kebap + Testi | Et + Testi | Testi + Ateş
+Testi {vase+drop #b86a3a} = Çömlek + Su* | Çömlek + Kulp | Çömlek + Uzunluk
+Tas Kebabı {bowl+meat #a85a2a} = Kebap + Kase | Et + Kase | Et + Tencere*
+Çöp Şiş {skewer+minus #b8602a} = Şiş Kebap + Küçük | Et + Kürdan | Kuşbaşı + Şiş
+Kürdan {nail+log #d8b880} = Çubuk + Küçük | Tahta + İncelik | Dal + İncelik*
+Kuzu Tandır {meat+oven #a04a2a} = Kuzu + Tandır | Kuzu + Fırın
+Kuzu Kapama {pot+sheep #b87a4a} = Kuzu + Tencere | Kuzu + Marul | Kuzu + Pilav
+Kuzu Şiş {skewer+sheep #b85a3a} = Kuzu + Şiş | Kuzu + Kebap
+Tavuk Şiş {skewer+chicken #f0b870} = Tavuk Eti + Şiş | Tavuk + Kebap | Tavuk Eti + Kebap
+Tavuk Döner {doner+chicken #f0c080} = Tavuk Eti + Döner | Tavuk + Döner | Tavuk Eti + Dikey Şiş
+Et Döner {doner+meat #b8502a} = Kırmızı Et + Döner | Kırmızı Et + Dikey Şiş
+Pilav Üstü Döner {bowl+doner #d8a060} = Döner + Pilav | Tavuk Döner + Pilav
+Kebap Tabağı {plate+skewer #c85a2a} = Kebap + Tabak | Kebap + Pilav | Kebap + Lavaş*

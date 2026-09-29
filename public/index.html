@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4 Element</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">
+      <div class="logo" id="logo"></div>
+      <div class="brand-text"><b>4 Element</b><small>simya külliyatı</small></div>
+    </div>
+
+    <div class="quest" id="quest">
+      <div class="quest-icon" id="questIcon"></div>
+      <div class="quest-text">
+        <small>GÖREV</small>
+        <b id="questName">…</b>
+        <span id="questMeta"></span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span>Deneme</span><b id="stAttempts">0</b></div>
+      <div class="stat"><span>İpucu</span><b id="stHints">0</b></div>
+      <div class="stat"><span>Keşif</span><b id="stFound">4</b></div>
+      <div class="stat accent"><span>Olası puan</span><b id="stScore">0</b></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn hint" id="btnHint" title="İpucu (puanı düşürür)"></button>
+      <button class="btn danger" id="btnGiveUp" title="Pes et"></button>
+      <button class="btn icon" id="btnMenu" title="Menü"></button>
+    </div>
+  </header>
+
+  <main>
+    <section id="board">
+      <div id="world"><svg id="links" class="links"></svg></div>
+      <div class="board-tools">
+        <button class="tool" id="zoomOut" title="Uzaklaş"></button>
+        <span id="zoomLabel">100%</span>
+        <button class="tool" id="zoomIn" title="Yakınlaş"></button>
+        <button class="tool" id="zoomFit" title="Hepsini göster"></button>
+        <span class="sep"></span>
+        <button class="tool" id="clearBoard" title="Alanı temizle"></button>
+      </div>
+      <div class="board-help">
+        <span><kbd>Sürükle</kbd> birleştir</span>
+        <span><kbd>Orta tuş</kbd> kaydır</span>
+        <span><kbd>Tekerlek</kbd> yakınlaş</span>
+        <span><kbd>Sağ tık</kbd> sil</span>
+        <span><kbd>Çift tık</kbd> kopyala</span>
+      </div>
+      <div id="toasts"></div>
+      <button class="skip-btn hidden" id="skipAnim"></button>
+    </section>
+
+    <aside id="sidebar">
+      <div class="side-head">
+        <div class="side-title">
+          <h2>Keşifler</h2>
+          <span id="discCount">4</span>
+        </div>
+        <div class="search">
+          <span class="search-ico" id="searchIco"></span>
+          <input id="search" type="text" placeholder="Keşiflerinde ara…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="sort">
+          <button data-sort="order" class="on">Keşif sırası</button>
+          <button data-sort="az">A → Z</button>
+          <button data-sort="cat">Kategori</button>
+        </div>
+      </div>
+      <div id="inventory"></div>
+    </aside>
+  </main>
+
+  <div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
+
+  <div id="treeView" class="overlay hidden">
+    <div class="tree-panel">
+      <header class="tree-head">
+        <div class="tree-title" id="treeTitle"></div>
+        <div class="tree-actions">
+          <button class="btn ghost" id="treeReplay"></button>
+          <button class="btn primary" id="treeNext"></button>
+        </div>
+      </header>
+      <div class="tree-body">
+        <div class="tree-canvas" id="treeCanvas">
+          <div class="tree-world" id="treeWorld"></div>
+          <div class="board-tools">
+            <button class="tool" id="tZoomOut"></button>
+            <button class="tool" id="tZoomIn"></button>
+            <button class="tool" id="tZoomFit"></button>
+          </div>
+          <div class="tree-legend">Aşağıdan yukarı oku: iki öğe birleşip üstteki öğeyi verir.</div>
+        </div>
+        <ol class="tree-steps" id="treeSteps"></ol>
+      </div>
+    </div>
+  </div>
+
+  <div id="blocker" class="hidden"></div>
+  <div id="hand" class="hidden"></div>
+  <div id="loading"><div class="spin"></div><p>Külliyat yükleniyor…</p></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

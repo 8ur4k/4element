@@ -1,0 +1,11 @@
+{
+  "name": "4element",
+  "version": "1.0.0",
+  "description": "4 Element — Türkçe birleştirme (simya) oyunu",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "check": "node tools/build.mjs"
+  }
+}
