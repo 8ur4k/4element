@@ -355,7 +355,12 @@ export function formatReport(r, { short = false, all = false } = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const all = process.argv.includes('--all');
-  const { report } = buildLibrary(path.join(root, 'data'));
+  const { library, report } = buildLibrary(path.join(root, 'data'));
   console.log(formatReport(report, { all }));
+  if (process.argv.includes('--write')) {
+    const out = path.join(root, 'public', 'library.json');
+    fs.writeFileSync(out, JSON.stringify(library));
+    console.log(`\n  → ${path.relative(root, out)} yazıldı`);
+  }
   process.exitCode = report.errors.length ? 1 : 0;
 }

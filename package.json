@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "check": "node tools/build.mjs"
+    "check": "node tools/build.mjs",
+    "build": "node tools/build.mjs --write"
   }
 }

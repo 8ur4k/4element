@@ -1,0 +1,12 @@
+# Netlify: külliyatı derleyip statik olarak yayınlar.
+[build]
+  command = "npm run build"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[headers]]
+  for = "/library.json"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
