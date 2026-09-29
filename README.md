@@ -20,7 +20,7 @@ Sonra tarayıcıda: http://localhost:3000
 
 | Eylem | Nasıl |
 |---|---|
-| Birleştir | Bir öğeyi sürükleyip diğerinin üstüne bırak (yeşil halka: birleşir, kırmızı: birleşmez) |
+| Birleştir | Bir öğeyi sürükleyip diğerinin üstüne bırak |
 | Alana öğe koy | Sağdaki keşiflerden sürükle ya da tıkla |
 | Alanda gezin | Orta tuşla (veya boş yerde sol tuşla) sürükle |
 | Yakınlaş / uzaklaş | Fare tekerleği, sol alttaki düğmeler |
@@ -31,7 +31,7 @@ Sonra tarayıcıda: http://localhost:3000
 - **İpucu**: Elindeki öğelerle hedefe bir adım yaklaştıran birleştirmeyi, sanal bir el sürükleyip bırakıyormuş gibi senin yerine yapar. Sınırsızdır ama her ipucu tur puanını %20 azaltır.
 - **Pes Et**: İki seçenek sunar: doğrudan *Yeni görev* ya da *Çözüme bak*. Çözüm önce 4 elementten hedefe hızlı bir animasyonla oynatılır, ardından incelenebilir (kaydır/yakınlaştır) bir **çözüm ağacı** ve adım adım liste açılır. *Sıradaki görev* ile devam edilir.
 - **Zorluk** (menü): Kolay (3–6 adım), Orta (7–12), Zor (13–20), Efsane (21+), Karışık.
-- **Birleşmeyen ikililer**: Üstüne getirince halka kırmızı olur; bırakırsan öğe olduğu yerde kalır, deneme sayılmaz.
+- **Çerçeve renkleri**: Bir öğeyi diğerinin üstüne getirince sonuç hemen belli olur: **yeşil** bu turda yeni bir şey çıkar, **mavi** zaten bulduğun bir şey çıkar, **kırmızı** birleşmezler. Kırmızıyken bırakırsan öğe olduğu yerde kalır, deneme sayılmaz.
 - **Keşif**: Turda yeni bir şey bulduğunda kısa bir "trink" sesi çalar ve öğe bir an parlar (ses menüden kapatılabilir).
 
 ### Puan
@@ -61,10 +61,11 @@ Menüden (sağ üstteki düğme ya da sol üstteki logo) **Yapay zeka modu** aç
 
 Birleşimler oyuncu denemeden önce arka planda üretilir:
 
-- **Sıcak öğeler**: son keşifler, alandaki öğeler ve 4 element. Bunların kendi aralarındaki birleşimleri her zaman hazır tutulur.
+- **Sıcak öğeler**: alandaki öğelerin hepsi, son 12 keşif ve 4 element (oyunun başında, 24 keşfe kadar bütün keşifler). Bunların kendi aralarındaki bütün birleşimleri her zaman hazır tutulur; üstüne getirince renk hemen belli olur.
+- Keşiflerden bir öğe sürüklenmeye başladığı anda, o öğenin alandaki her şeyle birleşimi de hemen istenir.
 - **İleri pencere**: bu birleşimlerden çıkacak (henüz bulunmamış) öğeler ve onların da sonuçları, dallar boyunca birkaç adım ileriye kadar izlenir.
-- Penceredeki hazır ve denenmemiş birleşim sayısı **50'nin altına düşünce 100'e kadar** yeniden doldurulur. İstekler 8'li paketler hâlinde, aynı anda 3 tane gider; sonuçlar satır satır akarak gelir.
-- Henüz üretilmemiş bir çiftin üstüne gelinirse halka mavi olur ve çift hemen (öncelikli) sorulur. Bırakılırsa iki öğe üst üste bekler, sonuç gelince birleşir.
+- Penceredeki hazır ve denenmemiş birleşim sayısı **50'nin altına düşünce 100'e kadar** yeniden doldurulur. İstekler 8'li paketler hâlinde, aynı anda 4 tane gider; sonuçlar satır satır akarak gelir.
+- Yine de henüz hazır olmayan bir çiftin üstüne gelinirse halka gri olur ve çift hemen (öncelikli) sorulur. Bırakılırsa iki öğe üst üste bekler, sonuç gelince birleşir.
 - Sekme arka plandayken ön-üretim durur.
 
 ### Kurulum

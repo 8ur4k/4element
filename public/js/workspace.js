@@ -5,7 +5,8 @@ const HIT = 42;          // birleştirme için merkezler arası azami uzaklık (
 const GRID = 28;
 
 export class Workspace {
-  // judge(sürüklenen, hedef) → 'ok' (birleşir) | 'no' (birleşmez) | 'wait' (henüz bilinmiyor)
+  // judge(sürüklenen, hedef) → 'new' (bu turda yeni bir şey çıkar) | 'old' (zaten bulunmuş bir
+  // şey çıkar) | 'no' (birleşmez) | 'wait' (sonuç henüz bilinmiyor)
   constructor({ board, world, links, render, judge, onCombine, onView }) {
     this.board = board;
     this.world = world;
@@ -153,15 +154,15 @@ export class Workspace {
     return best;
   }
 
-  // Hedef çerçevesi: yeşil birleşir, kırmızı birleşmez, mavi yapay zeka düşünüyor.
+  // Hedef çerçevesi: yeşil yeni bir şey, mavi zaten bulunmuş bir şey, kırmızı birleşmez.
   setHover(inst, item) {
-    const state = inst ? (this.judge ? this.judge(item, inst.item) : 'ok') : null;
+    const state = inst ? (this.judge ? this.judge(item, inst.item) : 'new') : null;
     if (this.hover === inst && this.hoverState === state) return;
-    if (this.hover) this.hover.el.classList.remove('target', 'ok', 'no', 'wait');
+    if (this.hover) this.hover.el.classList.remove('target', 'hv-new', 'hv-old', 'hv-no', 'hv-wait');
     this.hover = inst;
     this.hoverItem = item;
     this.hoverState = state;
-    if (inst) inst.el.classList.add('target', state);
+    if (inst) inst.el.classList.add('target', 'hv-' + state);
   }
 
   refreshHover() {

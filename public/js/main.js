@@ -229,13 +229,21 @@ function bump(id) {
 }
 
 // ——— Birleştirme ———
-// Hover önizlemesi: birleşir mi? Yapay zeka modunda bilinmeyen çift hemen sorulur.
+// Üstüne getirince çerçeve: 'new' bu turda yeni bir şey çıkar (yeşil), 'old' zaten bulunmuş
+// bir şey çıkar (mavi), 'no' birleşmez (kırmızı). Yapay zeka modunda sonuçlar önceden
+// hazırlanır; nadiren hazır değilse 'wait' (gri) gösterilir ve çift hemen sorulur.
 function judge(a, b) {
-  if (a == null || b == null) return 'ok';
-  if (!S.R || !S.R.ai) return SOLVER.combine(a, b) ? 'ok' : 'no';
-  const r = AIW.get(a, b);
-  if (!r) { AIE.focus(a, b); return 'wait'; }
-  return r.o >= 0 ? 'ok' : 'no';
+  const R = S.R;
+  if (a == null || b == null || !R) return 'new';
+  let outs;
+  if (!R.ai) outs = SOLVER.combine(a, b);
+  else {
+    const r = AIW.get(a, b);
+    if (!r) { AIE.focus(a, b); return 'wait'; }
+    outs = r.o >= 0 ? [r.o] : null;
+  }
+  if (!outs) return 'no';
+  return outs.some(o => !R.foundSet.has(o)) ? 'new' : 'old';
 }
 
 function combine(d, t, fromHint) {
@@ -406,6 +414,7 @@ function wireInventory() {
     if (!el || e.button !== 0 || S.busy) return;
     e.preventDefault();
     const id = +el.dataset.id;
+    if (S.R.ai) AIE.prime(id, [...ws.insts.values()].map(i => i.item));
     const sx = e.clientX, sy = e.clientY;
     let ghost = null;
     const move = (ev) => {
@@ -775,7 +784,7 @@ function openMenu(tab = 'game') {
           <li class="only-ai">Sonuç şu öncelikle bulunur: <b>1)</b> gerçek birleşim, <b>2)</b> ikisinin ortak noktası, <b>3)</b> kelime oyunu ya da espri. Hiçbiri makul değilse birleşmezler. Sonuç bir nesne olduğu kadar bir kişi, yer, kavram ya da eylem de olabilir.</li>
           <li class="only-ai">Üretilen dünya kalıcıdır: aynı ikili hep aynı sonucu verir. Yapay zeka sıradaki olası birleşimleri arka planda önceden hazırlar.</li>
           <li>Sağdaki keşiflerden öğeleri ortadaki alana sürükle; bir öğeyi diğerinin üstüne bırakınca birleşirler.</li>
-          <li>Üstüne getirdiğinde çerçeve <b class="c-ok">yeşilse</b> birleşirler, <b class="c-no">kırmızıysa</b> birleşmezler<span class="only-ai">, <b class="c-wait">maviyse</b> yapay zeka düşünüyordur</span>. Birleşmeyen öğe bıraktığın yerde kalır ve deneme sayılmaz.</li>
+          <li>Bir öğeyi diğerinin üstüne getirdiğinde çerçeve rengi sonucu hemen söyler: <b class="c-ok">yeşil</b> bu turda yeni bir şey çıkar, <b class="c-old">mavi</b> zaten bulduğun bir şey çıkar, <b class="c-no">kırmızı</b> birleşmezler<span class="only-ai">; <b class="c-wait">gri</b> ise sonuç henüz hazırlanıyor demektir</span>. Birleşmeyen öğe bıraktığın yerde kalır ve deneme sayılmaz.</li>
           <li><kbd>Orta tuş</kbd> veya boş alanda sol tuşla kaydır, <kbd>tekerlek</kbd> ile yakınlaş.</li>
           <li><kbd>Sağ tık</kbd> öğeyi siler, <kbd>çift tık</kbd> kopyalar. Keşiflerdeki bir öğeye tıklamak onu alana koyar.</li>
           <li class="only-classic">Puan: hedefin derinliği × verimlilik (en kısa yol ÷ yaptığın farklı birleşim) × ipucu cezası (her ipucu puanı %20 azaltır).</li>

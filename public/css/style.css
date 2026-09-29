@@ -227,18 +227,19 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .inst.dragging { cursor: grabbing; z-index: 99999 !important; }
 .inst.dragging .ico { transform: scale(1.1) rotate(-3deg); box-shadow: 0 12px 24px rgba(0,0,0,.5); }
-/* Hedef çerçevesi: yeşil birleşir, kırmızı birleşmez, mavi yapay zeka düşünüyor */
-/* Halka, üstüne gelen öğenin altından taşacak kadar dışarıda çizilir */
+/* Hedef çerçevesi: yeşil yeni bir şey, mavi zaten bulunmuş bir şey, kırmızı birleşmez,
+   gri sonuç henüz hazır değil. Halka, üstüne gelen öğenin altından taşacak kadar dışarıda çizilir. */
 .inst.target .ico { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px var(--ok), 0 0 28px 8px rgba(79,209,139,.5); transform: scale(1.06); }
-.inst.target.no .ico { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px var(--danger), 0 0 26px 6px rgba(255,107,107,.45); transform: none; }
-.inst.target.wait .ico { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px var(--blue), 0 0 26px 6px rgba(126,162,255,.45); animation: waitPulse 1s ease-in-out infinite; }
-@keyframes waitPulse { 50% { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px rgba(126,162,255,.4), 0 0 10px 2px rgba(126,162,255,.2); } }
+.inst.target.hv-old .ico { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px var(--blue), 0 0 26px 6px rgba(126,162,255,.45); transform: scale(1.03); }
+.inst.target.hv-no .ico { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px var(--danger), 0 0 26px 6px rgba(255,107,107,.45); transform: none; }
+.inst.target.hv-wait .ico { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px #8a93a8, 0 0 18px 4px rgba(200,206,220,.25); animation: waitPulse 1s ease-in-out infinite; transform: none; }
+@keyframes waitPulse { 50% { box-shadow: 0 0 0 5px rgba(14,16,22,.85), 0 0 0 8px rgba(138,147,168,.35), 0 0 6px 1px rgba(200,206,220,.1); } }
 .inst.thinking::after {
   content: ""; position: absolute; top: -7px; left: 50%;
   width: calc(var(--tile) + 14px); height: calc(var(--tile) + 14px);
   margin-left: calc(var(--tile) / -2 - 7px);
   border-radius: 50%;
-  border: 2.5px solid rgba(126,162,255,.2); border-top-color: var(--blue);
+  border: 2.5px solid rgba(200,206,220,.15); border-top-color: #c7cddb;
   animation: spin .8s linear infinite;
   pointer-events: none;
 }
@@ -455,7 +456,8 @@ main { flex: 1; display: flex; min-height: 0; }
 .key-row .btn { height: 38px; }
 .help-list .c-ok { color: var(--ok); }
 .help-list .c-no { color: var(--danger); }
-.help-list .c-wait { color: var(--blue); }
+.help-list .c-old { color: var(--blue); }
+.help-list .c-wait { color: #aab2c5; }
 .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .tabs button { height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line2); background: var(--bg2); color: var(--muted); font-weight: 600; }
 .tabs button.on { color: var(--text); border-color: var(--blue); background: rgba(126,162,255,.12); }

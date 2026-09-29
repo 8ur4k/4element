@@ -3,17 +3,19 @@
 // Dünya turlar boyunca korunur: bir kez üretilen birleşim hep aynı sonucu verir ve
 // sonraki üretimlere "kanon" olarak gönderilir.
 //
-// Ön-üretim, oyuncunun elindeki "sıcak" öğelerin (son keşifler, alandakiler, 4 element)
-// birleşimlerini ve bu birleşimlerden çıkacak öğelerin bir adım sonrasını önceden
-// hazırlar. Bu pencerede hazır bekleyen (denenmemiş) birleşim sayısı ALT sınırın altına
+// Ön-üretim, oyuncunun elindeki "sıcak" öğelerin (alandakiler, son keşifler, 4 element)
+// birbirleriyle bütün birleşimlerini ve bu birleşimlerden çıkacak öğelerin birkaç adım
+// sonrasını önceden hazırlar; böylece bir öğe diğerinin üstüne getirildiğinde sonuç
+// çoğu zaman zaten bilinir. Bu pencerede hazır bekleyen (denenmemiş) birleşim sayısı ALT sınırın altına
 // düşünce ÜST sınıra kadar yeniden doldurulur; oyuncu çoğu zaman hiç beklemez.
 
 export const AI_CATS = ['Doğa', 'Gök', 'Madde', 'Bitki', 'Hayvan', 'İnsan', 'Toplum', 'Yapı', 'Araç', 'Teknoloji', 'Yemek', 'Sanat', 'Spor', 'Kavram', 'Eylem', 'Kişi', 'Yer', 'Mitoloji'];
 export const KINDS = { 1: 'Birleşim', 2: 'Ortak nokta', 3: 'Kelime oyunu' };
 
 const LOW = 50, HIGH = 100;      // hazır birleşim: ALT'ın altına düşünce ÜST'e kadar doldur
-const HOT = 14, AHEAD = 16;      // penceredeki sıcak öğe / ileride bulunacak öğe sayısı
-const BATCH = 8, CONC = 3, URGENT_CONC = 4;
+const BOARD = 40, RECENT = 12;    // sıcak öğe: alandakiler (en çok) + son keşifler
+const HOT = 24, AHEAD = 16;      // sıcak öğe alt sınırı (oyun başında bütün keşifler) / ileride bulunacak öğe sayısı
+const BATCH = 8, CONC = 4, URGENT_CONC = 4;
 const MISS_LIMIT = 3;            // model bir çifti bu kadar kez atlarsa "birleşmez" say
 const CANON_HEAD = 600, CANON_MAX = 1800, CANON_STEP = 300;
 const STORE = '4e:aiworld';
@@ -243,6 +245,21 @@ export class AIEngine {
     }, 160);
   }
 
+  // Keşiflerden sürüklenmeye başlanan öğenin alandaki her şeyle birleşimini hemen hazırla;
+  // öğe hedefe varana kadar sonuçlar çoğunlukla gelmiş olur.
+  prime(a, others) {
+    const pairs = [];
+    const seen = new Set();
+    for (const b of others) {
+      const k = pairKey(a, b);
+      if (seen.has(k) || this.w.rec.has(k) || this.inflight.has(k)) continue;
+      seen.add(k);
+      pairs.push([a, b]);
+    }
+    // Küçük paketler paralel gider: ilk sonuçlar daha çabuk gelir
+    for (let i = 0; i < pairs.length; i += 3) this.send(pairs.slice(i, i + 3), true);
+  }
+
   // Sonucu hemen gereken çift (bırakıldı ya da üstünde bekleniyor).
   urgent(a, b) {
     const k = pairKey(a, b);
@@ -269,19 +286,22 @@ export class AIEngine {
     const w = this.w;
     const fs = new Set(found);
 
-    // Sıcak öğeler: son keşifler, alandakiler, 4 element
+    // Sıcak öğeler: alandakilerin hepsi, son keşifler, 4 element. Bunların kendi
+    // aralarındaki her birleşim hazır tutulur ki üstüne gelince sonuç hemen bilinsin.
     const H = [];
-    const add = (x) => { if (fs.has(x) && !H.includes(x)) H.push(x); };
-    for (let i = found.length - 1; i >= 0 && H.length < 8; i--) add(found[i]);
-    for (const x of board) { if (H.length >= HOT) break; add(x); }
+    const inH = new Set();
+    const add = (x) => { if (fs.has(x) && !inH.has(x)) { inH.add(x); H.push(x); } };
+    for (const x of board) { if (H.length >= BOARD) break; add(x); }
+    for (let i = found.length - 1, n = 0; i >= 0 && n < RECENT; i--, n++) add(found[i]);
     for (const x of w.base) add(x);
     for (let i = found.length - 1; i >= 0 && H.length < HOT; i--) add(found[i]);
+    const MAXW = H.length + AHEAD;
 
     // Pencere: sıcak öğeler + birleşimlerinden çıkacak, henüz bulunmamış öğeler.
     // Önbellekteki sonuçlar izlenerek dallar birkaç adım ileriye kadar genişletilir.
     const W = H.slice();
     const inW = new Set(W);
-    for (let depth = 0; depth < 4 && W.length < HOT + AHEAD; depth++) {
+    for (let depth = 0; depth < 4 && W.length < MAXW; depth++) {
       const next = [];
       for (let i = 0; i < W.length; i++) {
         for (let j = i; j < W.length; j++) {
@@ -292,7 +312,7 @@ export class AIEngine {
       if (!next.length) break;
       next.sort((x, y) => x[1] - y[1]);
       for (const [o] of next) {
-        if (W.length >= HOT + AHEAD) break;
+        if (W.length >= MAXW) break;
         if (!inW.has(o)) { inW.add(o); W.push(o); }
       }
     }
