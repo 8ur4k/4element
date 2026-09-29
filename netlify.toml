@@ -1,10 +1,14 @@
 # Netlify: külliyatı derleyip statik olarak yayınlar.
+# Yapay zeka modu için site ortam değişkenlerine DEEPSEEK_API_KEY eklenmeli.
 [build]
   command = "npm run build"
   publish = "public"
 
 [build.environment]
   NODE_VERSION = "20"
+
+[functions]
+  directory = "netlify/functions"
 
 [[headers]]
   for = "/library.json"

@@ -4,6 +4,8 @@ import { iconHTML, uiIcon } from './icons.js';
 import { Workspace } from './workspace.js';
 import { showTree, hideTree } from './tree.js';
 import { Hand, sleep } from './anim.js';
+import { AIWorld, AIEngine, AI_CATS, KINDS, pairKey, normName } from './ai.js';
+import { chime, unlockAudio } from './sfx.js';
 
 const $ = (s) => document.querySelector(s);
 const lowerTR = (s) => s.toLocaleLowerCase('tr-TR');
@@ -23,17 +25,24 @@ const store = {
   set(k, v) { try { localStorage.setItem('4e:' + k, JSON.stringify(v)); } catch { /* depolama kapalı */ } },
 };
 
-let LIB, SOLVER, ITEMS, N, ws, hand;
+// ITEMS/N/CATS o anki moda göre ya külliyatı ya da yapay zeka dünyasını gösterir.
+let LIB, SOLVER, ITEMS, N, CATS, ws, hand, AIW, AIE;
 const S = {
-  settings: store.get('settings', { diff: 'orta', sort: 'order' }),
+  settings: store.get('settings', { diff: 'orta', sort: 'order', ai: false, sound: true }),
   life: store.get('life', { rounds: 0, wins: 0, total: 0, best: 0, streak: 0, disc: [], recent: [] }),
   lifeDisc: null,
+  aiLife: store.get('ailife', { disc: [] }),
+  aiDisc: null,
+  aiKey: store.get('aikey', { k: '' }).k,
+  aiInfo: null,
   R: null,
   busy: false,
   skip: null,
 };
 const saveLife = () => store.set('life', S.life);
 const saveSettings = () => store.set('settings', S.settings);
+const saveAiLife = () => store.set('ailife', S.aiLife);
+const aiReady = () => !!(S.aiInfo && S.aiInfo.ok && (S.aiInfo.hasKey || S.aiKey));
 
 // ——— Başlangıç ———
 async function boot() {
@@ -42,8 +51,28 @@ async function boot() {
   LIB = await res.json();
   ITEMS = LIB.items;
   N = ITEMS.length;
+  CATS = LIB.cats;
   SOLVER = new Solver(N, LIB.recipes);
   S.lifeDisc = new Set(S.life.disc);
+  S.aiDisc = new Set(S.aiLife.disc);
+
+  // Yapay zeka dünyası: adı külliyatta geçen öğeler külliyatın ikonunu giyer, diğerleri emoji.
+  const corpus = new Map(LIB.items.map(it => [normName(it.n), it]));
+  const decorate = (it) => {
+    const c = corpus.get(normName(it.n));
+    if (c) Object.assign(it, { g: c.g, b: c.b, v: c.v, c: c.c });
+    return it;
+  };
+  AIW = new AIWorld(LIB.base.map(id => LIB.items[id]), decorate);
+  AIE = new AIEngine(AIW, {
+    ctx: aiCtx,
+    key: () => S.aiKey,
+    onResult: aiResult,
+    onStatus: aiStatus,
+    onError: (err) => note(`Yapay zeka yanıt vermedi: ${err.message}`, 'err'),
+  });
+  S.aiInfo = await AIEngine.info();
+  unlockAudio();
 
   $('#logo').innerHTML = LIB.base.map(id => iconHTML(ITEMS[id])).join('');
   $('#btnHint').innerHTML = `${uiIcon('bulb')}İpucu`;
@@ -65,6 +94,7 @@ async function boot() {
     world: $('#world'),
     links: $('#links'),
     render: (id) => `${iconHTML(ITEMS[id])}<div class="lbl">${esc(ITEMS[id].n)}</div>`,
+    judge,
     onCombine: (d, t) => combine(d, t, false),
     onView: (z) => { $('#zoomLabel').textContent = Math.round(z * 100) + '%'; },
   });
@@ -72,7 +102,7 @@ async function boot() {
   wireUI();
   newRound();
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__game = { S, ws, SOLVER, ITEMS, LIB, combine, newRound, doHint, playSolution };
+    window.__game = { S, ws, SOLVER, get ITEMS() { return ITEMS; }, LIB, AIW, AIE, combine, newRound, doHint, playSolution };
   }
   $('#loading').classList.add('gone');
   setTimeout(() => $('#loading').remove(), 500);
@@ -98,6 +128,19 @@ function pickTarget() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+function setMode(ai) {
+  ITEMS = ai ? AIW.items : LIB.items;
+  N = ITEMS.length;
+  CATS = ai ? AI_CATS : LIB.cats;
+  document.body.classList.toggle('ai', ai);
+  $('#brandSub').textContent = ai ? 'yapay zeka modu' : 'simya külliyatı';
+  $('#questLabel').textContent = ai ? 'YAPAY ZEKA MODU' : 'GÖREV';
+  $('#stScoreLbl').textContent = ai ? 'Dünya' : 'Olası puan';
+  $('#btnGiveUp').classList.toggle('danger', !ai);
+  $('#btnGiveUp').innerHTML = ai ? `${uiIcon('refresh')}<span>Yeni tur</span>` : `${uiIcon('flag')}<span>Pes Et</span>`;
+  if (ai) AIE.start(); else AIE.stop();
+}
+
 function newRound() {
   hideModal();
   hideTree($('#treeView'));
@@ -105,39 +148,57 @@ function newRound() {
   ws.locked = false;
   $('#skipAnim').classList.add('hidden');
   ws.clear();
-  const target = pickTarget();
-  S.R = {
-    target,
-    opt: ITEMS[target].s,
-    found: [...LIB.base],
-    foundSet: new Set(LIB.base),
-    tried: new Set(),
-    attempts: 0,
-    hints: 0,
-    over: false,
-    won: false,
-    counted: false,
-  };
-  S.life.recent.push(ITEMS[target].n);
-  if (S.life.recent.length > 60) S.life.recent.splice(0, S.life.recent.length - 60);
-  saveLife();
+  const ai = !!S.settings.ai && aiReady();
+  if (S.settings.ai && !ai) setTimeout(() => note('Yapay zeka modu için anahtar gerekli; menüden ekleyebilirsin. Şimdilik külliyatla oynuyorsun.', 'err'), 600);
+  setMode(ai);
+  const base = ai ? AIW.base : LIB.base;
+  const round = { found: [...base], foundSet: new Set(base), tried: new Set(), attempts: 0, hints: 0, over: false, won: false };
+  if (ai) {
+    // Serbest keşif: hedef ve puan yok, tur sonsuz
+    S.R = { ...round, ai: true, target: -1, opt: 0, counted: true };
+  } else {
+    const target = pickTarget();
+    S.R = { ...round, ai: false, target, opt: ITEMS[target].s, counted: false };
+    S.life.recent.push(ITEMS[target].n);
+    if (S.life.recent.length > 60) S.life.recent.splice(0, S.life.recent.length - 60);
+    saveLife();
+  }
   $('#search').value = '';
   $('#quest').classList.remove('won');
-  $('#btnGiveUp').innerHTML = `${uiIcon('flag')}<span>Pes Et</span>`;
   renderQuest();
   renderInventory();
   updateStats();
   ws.resetView(false);
   const offs = [-165, -55, 55, 165];
-  LIB.base.forEach((id, i) => setTimeout(() => ws.spawn(id, offs[i] || i * 110, 0, { pop: true }), 80 + i * 70));
+  base.forEach((id, i) => setTimeout(() => ws.spawn(id, offs[i] || i * 110, 0, { pop: true }), 80 + i * 70));
+  if (ai) AIE.poke();
 }
 
 function renderQuest() {
-  const R = S.R, t = ITEMS[R.target];
+  const R = S.R;
+  if (R.ai) {
+    $('#questIcon').innerHTML = iconHTML({ g: 'wand', b: 'sparkle', c: '#6f7cf2' });
+    $('#questName').textContent = 'Serbest keşif';
+    renderAIMeta();
+    return;
+  }
+  const t = ITEMS[R.target];
   $('#questIcon').innerHTML = iconHTML(t);
   $('#questName').textContent = t.n;
   const d = DIFFS[S.settings.diff] || DIFFS.orta;
-  $('#questMeta').textContent = `${LIB.cats[t.k]} · en kısa yol ≈ ${R.opt} birleştirme · ${d.name}`;
+  $('#questMeta').textContent = `${CATS[t.k]} · en kısa yol ≈ ${R.opt} birleştirme · ${d.name}`;
+}
+
+// Yapay zeka durumu: dünyadaki öğe sayısı ve arka planda hazır bekleyen birleşimler
+let aiSt = { ready: 0, busy: false }, metaQueued = false;
+function renderAIMeta() {
+  if (!S.R || !S.R.ai) return;
+  $('#questMeta').innerHTML = `dünyada ${fmt(AIW.items.length)} öğe · <span class="ai-st${aiSt.busy ? ' busy' : ''}"><i></i>${aiSt.ready} birleşim hazır</span>`;
+}
+function scheduleMeta() {
+  if (metaQueued) return;
+  metaQueued = true;
+  requestAnimationFrame(() => { metaQueued = false; renderAIMeta(); if (S.R && S.R.ai) updateStats(); });
 }
 
 function scoreNow(R = S.R) {
@@ -153,6 +214,11 @@ function updateStats() {
   $('#stAttempts').textContent = R.attempts;
   $('#stHints').textContent = R.hints;
   $('#stFound').textContent = R.found.length;
+  if (R.ai) {
+    $('#stScore').textContent = fmt(AIW.items.length);
+    $('#discCount').textContent = fmt(R.found.length);
+    return;
+  }
   $('#stScore').textContent = R.over && !R.won ? '0' : fmt(scoreNow().total);
   $('#discCount').textContent = `${R.found.length} / ${fmt(N)}`;
 }
@@ -163,49 +229,134 @@ function bump(id) {
 }
 
 // ——— Birleştirme ———
+// Hover önizlemesi: birleşir mi? Yapay zeka modunda bilinmeyen çift hemen sorulur.
+function judge(a, b) {
+  if (a == null || b == null) return 'ok';
+  if (!S.R || !S.R.ai) return SOLVER.combine(a, b) ? 'ok' : 'no';
+  const r = AIW.get(a, b);
+  if (!r) { AIE.focus(a, b); return 'wait'; }
+  return r.o >= 0 ? 'ok' : 'no';
+}
+
 function combine(d, t, fromHint) {
   const R = S.R;
+  if (R.ai) return aiCombine(d, t, fromHint);
   const outs = SOLVER.combine(d.item, t.item);
-  const key = SOLVER.key(d.item, t.item);
-  if (!R.over && !R.tried.has(key)) {
-    R.tried.add(key);
-    if (!fromHint) { R.attempts++; bump('stAttempts'); }
-  }
-  if (!outs) { ws.reject(d, t); updateStats(); return null; }
+  if (!outs) return null;              // birleşmiyor: bırakılan öğe olduğu yerde kalır
+  countTry(SOLVER.key(d.item, t.item), fromHint);
+  return merge(d, t, outs);
+}
+
+// Yalnızca birleşen, daha önce denenmemiş ikililer deneme sayılır.
+function countTry(key, fromHint) {
+  const R = S.R;
+  if (R.over || R.tried.has(key)) return;
+  R.tried.add(key);
+  if (!fromHint) { R.attempts++; bump('stAttempts'); }
+}
+
+function merge(d, t, outs, info) {
+  const R = S.R;
   const x = t.x, y = t.y;
   ws.remove(d, 'merge');
   ws.remove(t, 'merge');
   ws.burst(x, y);
   const made = [];
+  let fresh = false;
   outs.forEach((o, i) => {
     const isNew = !R.foundSet.has(o);
-    const inst = ws.spawn(o, x + (i - (outs.length - 1) / 2) * 100, y, { pop: true, isNew });
+    const ox = x + (i - (outs.length - 1) / 2) * 100;
+    if (isNew) ws.glow(ox, y);
+    const inst = ws.spawn(o, ox, y, { pop: true, isNew });
     made.push(inst);
-    if (isNew) discover(o, d.item, t.item);
+    if (isNew) { fresh = true; discover(o, d.item, t.item, info); }
     if (o === R.target && !R.over) { inst.el.classList.add('goal'); win(); }
   });
+  if (fresh && S.settings.sound) chime();
   updateStats();
+  if (R.ai) AIE.poke();
   return made;
 }
 
-function discover(id, a, b) {
+function aiCombine(d, t, fromHint) {
+  const rec = AIW.get(d.item, t.item);
+  if (rec) return aiApply(d, t, rec, fromHint);
+  // Sonuç henüz yok: öğeler üst üste bekler, yapay zekaya hemen sorulur
+  const R = S.R;
+  d.el.classList.add('thinking');
+  t.el.classList.add('thinking');
+  const settle = () => { d.el.classList.remove('thinking'); t.el.classList.remove('thinking'); };
+  AIE.urgent(d.item, t.item).then((r) => {
+    settle();
+    if (S.R !== R || !ws.has(d) || !ws.has(t)) return;
+    if (Math.hypot(d.x - t.x, d.y - t.y) > 60) return;    // bu arada ayrıldılar
+    if (r.o < 0) ws.nope(t);
+    aiApply(d, t, r, fromHint);
+  }, settle);
+  return null;
+}
+
+function aiApply(d, t, rec, fromHint) {
+  if (rec.o < 0) return null;
+  countTry(pairKey(d.item, t.item), fromHint);
+  return merge(d, t, [rec.o], rec);
+}
+
+function discover(id, a, b, info) {
   const R = S.R;
   R.found.push(id);
   R.foundSet.add(id);
   const name = ITEMS[id].n;
-  if (!S.lifeDisc.has(name)) { S.lifeDisc.add(name); S.life.disc.push(name); saveLife(); }
+  if (R.ai) {
+    if (!S.aiDisc.has(name)) { S.aiDisc.add(name); S.aiLife.disc.push(name); saveAiLife(); }
+  } else if (!S.lifeDisc.has(name)) { S.lifeDisc.add(name); S.life.disc.push(name); saveLife(); }
   renderInventory(id);
-  toast(id, a, b);
+  toast(id, a, b, info);
 }
 
-function toast(id, a, b) {
+function toast(id, a, b, info) {
   const box = $('#toasts');
   const el = document.createElement('div');
-  el.className = 'toast';
-  el.innerHTML = `${iconHTML(ITEMS[id])}<div><small>YENİ KEŞİF</small><b>${esc(ITEMS[id].n)}</b><span class="rc">${esc(ITEMS[a].n)} + ${esc(ITEMS[b].n)}</span></div>`;
+  const kind = info && KINDS[info.t] ? `<em class="kind k${info.t}">${KINDS[info.t]}</em>` : '';
+  const why = info && info.r ? `<span class="why">${esc(info.r)}</span>` : '';
+  el.className = 'toast' + (why ? ' long' : '');
+  el.innerHTML = `${iconHTML(ITEMS[id])}<div><small>YENİ KEŞİF${kind}</small><b>${esc(ITEMS[id].n)}</b><span class="rc">${esc(ITEMS[a].n)} + ${esc(ITEMS[b].n)}</span>${why}</div>`;
   box.prepend(el);
   while (box.children.length > 3) box.lastChild.remove();
-  setTimeout(() => el.remove(), 2700);
+  setTimeout(() => el.remove(), why ? 3900 : 2700);
+}
+
+// Yalnızca metinden oluşan kısa bildirim
+function note(text, cls = '') {
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast note long' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+  box.prepend(el);
+  while (box.children.length > 3) box.lastChild.remove();
+  setTimeout(() => el.remove(), 3900);
+}
+
+// ——— Yapay zeka motoru bağlantıları ———
+function aiCtx() {
+  const R = S.R;
+  if (!R || !R.ai) return null;
+  const board = [];
+  for (const i of ws.insts.values()) board.push(i.item);
+  board.reverse();                     // en son konanlar önce
+  return { found: R.found, board, tried: R.tried };
+}
+
+function aiResult() {
+  if (!S.R || !S.R.ai) return;
+  ws.refreshHover();
+  scheduleMeta();
+}
+
+function aiStatus(st) {
+  if (st.ready === aiSt.ready && st.busy === aiSt.busy) return;
+  aiSt = st;
+  scheduleMeta();
 }
 
 // ——— Envanter ———
@@ -223,7 +374,7 @@ function renderInventory(freshId) {
     ids.sort((a, b) => (ITEMS[a].k - ITEMS[b].k) || byName(a, b));
     let last = -1;
     for (const id of ids) {
-      if (ITEMS[id].k !== last) { last = ITEMS[id].k; html += `<div class="inv-cat">${esc(LIB.cats[last])}</div>`; }
+      if (ITEMS[id].k !== last) { last = ITEMS[id].k; html += `<div class="inv-cat">${esc(CATS[last])}</div>`; }
       html += cell(id);
     }
   } else {
@@ -263,7 +414,7 @@ function wireInventory() {
       moveGhost(ghost, ev.clientX, ev.clientY);
       if (ws.contains(ev.clientX, ev.clientY)) {
         const w = ws.toWorld(ev.clientX, ev.clientY);
-        ws.setHover(ws.hitTest(w.x, w.y));
+        ws.setHover(ws.hitTest(w.x, w.y), id);
       } else ws.setHover(null);
     };
     const up = (ev) => {
@@ -272,6 +423,7 @@ function wireInventory() {
       if (!ghost) {
         const spot = ws.freeSpot();
         ws.spawn(id, spot.x, spot.y, { pop: true });
+        if (S.R.ai) AIE.poke();
         return;
       }
       ghost.remove();
@@ -281,6 +433,7 @@ function wireInventory() {
       const w = ws.toWorld(ev.clientX, ev.clientY);
       const inst = ws.spawn(id, w.x, w.y, { pop: !target });
       if (target) combine(inst, target, false);
+      if (S.R.ai) AIE.poke();
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -329,6 +482,18 @@ function showWin(sc) {
 function giveUp() {
   if (S.busy) return;
   const R = S.R;
+  if (R.ai) {
+    const n = R.found.length - AIW.base.length;
+    if (!n) { newRound(); return; }
+    modal(`
+      <h3>Yeni tur?</h3>
+      <p>Bu turda <b style="color:var(--text)">${n}</b> keşif yaptın. Yeni turda 4 elementle baştan başlarsın; yapay zekanın kurduğu dünya korunur, aynı birleşimler yine aynı sonucu verir.</p>
+      <div class="modal-btns">
+        <button class="btn ghost" data-act="close">Vazgeç, devam et</button>
+        <button class="btn primary" data-act="new">${uiIcon('refresh')}Yeni tur</button>
+      </div>`, { new: () => newRound(), close: () => hideModal() });
+    return;
+  }
   if (R.over) { newRound(); return; }
   const t = ITEMS[R.target];
   modal(`
@@ -447,12 +612,32 @@ function openTree(steps, fromGiveUp) {
 }
 
 // ——— İpucu ———
+// Yapay zeka modunda ipucu: hazırda bekleyen, denenmemiş ve yeni bir öğe veren birleşim
+function aiHintStep() {
+  const R = S.R, f = R.found;
+  for (let i = f.length - 1; i >= 0; i--) {
+    for (let j = i; j >= 0; j--) {
+      const k = pairKey(f[i], f[j]);
+      if (R.tried.has(k)) continue;
+      const r = AIW.rec.get(k);
+      if (r && r.o >= 0 && !R.foundSet.has(r.o)) return { a: f[i], b: f[j] };
+    }
+  }
+  return null;
+}
+
 async function doHint() {
   const R = S.R;
   if (S.busy || R.over) return;
-  const steps = SOLVER.plan(R.target, R.found);
-  if (!steps || !steps.length) return;
-  const s = steps[0];
+  let s;
+  if (R.ai) {
+    s = aiHintStep();
+    if (!s) { note('İpucu için birleşimler hazırlanıyor, birazdan tekrar dene.'); AIE.poke(); return; }
+  } else {
+    const steps = SOLVER.plan(R.target, R.found);
+    if (!steps || !steps.length) return;
+    s = steps[0];
+  }
   R.hints++;
   bump('stHints');
   updateStats();
@@ -496,7 +681,7 @@ async function dragFromInventory(id, dest, onto) {
   const to = ws.toScreen(dest.x, dest.y);
   await hand.moveTo(to.x, to.y, 700, (x, y) => {
     moveGhost(ghost, x, y);
-    if (onto) ws.setHover(Math.hypot(x - to.x, y - to.y) < 60 ? onto : null);
+    if (onto) ws.setHover(Math.hypot(x - to.x, y - to.y) < 60 ? onto : null, id);
   });
   await hand.release();
   ghost.remove();
@@ -514,7 +699,7 @@ async function dragInstance(inst, onto) {
   await hand.moveTo(to.x, to.y, 650, (x, y) => {
     const w = ws.toWorld(x, y);
     ws.moveTo(inst, w.x, w.y);
-    ws.setHover(Math.hypot(x - to.x, y - to.y) < 60 ? onto : null);
+    ws.setHover(Math.hypot(x - to.x, y - to.y) < 60 ? onto : null, inst.item);
   });
   inst.el.classList.remove('dragging');
   await hand.release();
@@ -531,6 +716,23 @@ function modal(html, actions = {}, wide = false) {
 }
 function hideModal() { $('#modal').classList.add('hidden'); modalActions = null; }
 
+function aiConfigHTML() {
+  const inf = S.aiInfo || {};
+  if (!inf.ok) {
+    return `<p class="ai-cfg-msg err">Yapay zeka sunucusuna ulaşılamadı. Oyunu <code>npm start</code> ile çalıştırman (Netlify'da ise <code>DEEPSEEK_API_KEY</code> ortam değişkenini tanımlaman) gerekiyor.</p>`;
+  }
+  if (inf.hasKey) {
+    return `<p class="ai-cfg-msg ok">Sunucuda DeepSeek anahtarı tanımlı · model: <b>${esc(inf.model)}</b></p>`;
+  }
+  return `
+    <p class="ai-cfg-msg">Sunucuda anahtar yok. DeepSeek API anahtarını buraya girebilirsin; yalnızca bu tarayıcıda saklanır ve yerel sunucu üzerinden DeepSeek'e iletilir. Kalıcı yol: proje kökündeki <code>.env</code> dosyasına <code>DEEPSEEK_API_KEY=…</code> yazmak.</p>
+    <div class="key-row">
+      <input id="aiKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" value="${esc(S.aiKey)}">
+      <button class="btn" data-act="saveKey">Kaydet</button>
+    </div>
+    <p class="ai-cfg-msg ${S.aiKey ? 'ok' : ''}" id="aiKeyState">${S.aiKey ? 'Bu tarayıcıda kayıtlı anahtar kullanılacak.' : 'Anahtar girilmedi.'}</p>`;
+}
+
 function openMenu(tab = 'game') {
   const L = S.life;
   const diffBtns = Object.entries(DIFFS).map(([k, d]) =>
@@ -538,30 +740,61 @@ function openMenu(tab = 'game') {
   let body = '';
   if (tab === 'game') {
     body = `
-      <div class="menu-section"><h4>Zorluk</h4><div class="seg" id="diffSeg">${diffBtns}</div></div>
+      <div class="menu-section"><h4>Oyun modu</h4>
+        <button class="toggle-row ai-toggle ${S.settings.ai ? 'on' : ''}" data-act="toggleAI">
+          <span class="tr-ico">${uiIcon('wand')}</span>
+          <span class="tr-txt"><b>Yapay zeka modu</b><small>Hazır külliyat yerine her birleşimi yapay zeka (DeepSeek) o an üretir. Hedef yok; açık uçlu, sonsuz keşif.</small></span>
+          <span class="switch"></span>
+        </button>
+        <div class="ai-cfg only-ai" id="aiCfg">${aiConfigHTML()}</div>
+        <button class="toggle-row snd-toggle ${S.settings.sound ? 'on' : ''}" data-act="toggleSound">
+          <span class="tr-ico">${uiIcon('bell')}</span>
+          <span class="tr-txt"><b>Keşif sesi</b><small>Yeni bir şey bulduğunda kısa bir “trink”.</small></span>
+          <span class="switch"></span>
+        </button>
+      </div>
+      <div class="menu-section only-classic"><h4>Zorluk</h4><div class="seg" id="diffSeg">${diffBtns}</div></div>
       <div class="menu-section"><h4>İstatistik</h4>
-        <div class="life-grid">
+        <div class="life-grid only-classic">
           <div><b>${fmt(L.total)}</b><span>toplam puan</span></div>
           <div><b>${L.wins}/${L.rounds}</b><span>kazanılan tur</span></div>
           <div><b>${fmt(L.best)}</b><span>en iyi tur</span></div>
           <div><b>${L.streak}</b><span>seri</span></div>
         </div>
+        <div class="life-grid only-ai">
+          <div><b>${fmt(S.aiLife.disc.length)}</b><span>keşfettiğin</span></div>
+          <div><b>${fmt(AIW.items.length)}</b><span>dünyadaki öğe</span></div>
+          <div><b>${fmt(AIW.rec.size)}</b><span>üretilen birleşim</span></div>
+          <div><b>${S.R.ai ? fmt(S.R.found.length - AIW.base.length) : '–'}</b><span>bu turdaki keşif</span></div>
+        </div>
       </div>
       <div class="menu-section"><h4>Nasıl oynanır?</h4>
         <ul class="help-list">
-          <li>Her turda külliyattan rastgele bir <b>hedef</b> seçilir. Ateş, Su, Toprak ve Hava ile başlarsın.</li>
+          <li class="only-classic">Her turda külliyattan rastgele bir <b>hedef</b> seçilir. Ateş, Su, Toprak ve Hava ile başlarsın.</li>
+          <li class="only-ai">Ateş, Su, Toprak ve Hava ile başlarsın. Hazır külliyat yok: her birleşimi yapay zeka o an üretir. Hedef ve puan yok, istediğin kadar keşfet.</li>
+          <li class="only-ai">Sonuç şu öncelikle bulunur: <b>1)</b> gerçek birleşim, <b>2)</b> ikisinin ortak noktası, <b>3)</b> kelime oyunu ya da espri. Hiçbiri makul değilse birleşmezler. Sonuç bir nesne olduğu kadar bir kişi, yer, kavram ya da eylem de olabilir.</li>
+          <li class="only-ai">Üretilen dünya kalıcıdır: aynı ikili hep aynı sonucu verir. Yapay zeka sıradaki olası birleşimleri arka planda önceden hazırlar.</li>
           <li>Sağdaki keşiflerden öğeleri ortadaki alana sürükle; bir öğeyi diğerinin üstüne bırakınca birleşirler.</li>
+          <li>Üstüne getirdiğinde çerçeve <b class="c-ok">yeşilse</b> birleşirler, <b class="c-no">kırmızıysa</b> birleşmezler<span class="only-ai">, <b class="c-wait">maviyse</b> yapay zeka düşünüyordur</span>. Birleşmeyen öğe bıraktığın yerde kalır ve deneme sayılmaz.</li>
           <li><kbd>Orta tuş</kbd> veya boş alanda sol tuşla kaydır, <kbd>tekerlek</kbd> ile yakınlaş.</li>
           <li><kbd>Sağ tık</kbd> öğeyi siler, <kbd>çift tık</kbd> kopyalar. Keşiflerdeki bir öğeye tıklamak onu alana koyar.</li>
-          <li>Puan: hedefin derinliği × verimlilik (en kısa yol ÷ denediğin farklı birleşim) × ipucu cezası (her ipucu puanı %20 azaltır).</li>
-          <li><b>İpucu</b> (<kbd>H</kbd>), elindekilerle hedefe bir adım yaklaştıran birleştirmeyi senin yerine yapar.</li>
-          <li>Aynı ikiliyi tekrar denemek deneme sayını artırmaz; yalnızca farklı birleşimler sayılır.</li>
+          <li class="only-classic">Puan: hedefin derinliği × verimlilik (en kısa yol ÷ yaptığın farklı birleşim) × ipucu cezası (her ipucu puanı %20 azaltır).</li>
+          <li class="only-classic"><b>İpucu</b> (<kbd>H</kbd>), elindekilerle hedefe bir adım yaklaştıran birleştirmeyi senin yerine yapar.</li>
+          <li class="only-ai"><b>İpucu</b> (<kbd>H</kbd>), sana yeni bir şey kazandıracak, henüz denemediğin bir birleşimi senin yerine yapar.</li>
         </ul>
       </div>
       <div class="modal-btns">
         <button class="btn ghost" data-act="close">Kapat</button>
-        <button class="btn primary" data-act="restart">${uiIcon('refresh')}Bu zorlukta yeni görev</button>
+        <button class="btn primary" data-act="restart">${uiIcon('refresh')}<span class="only-classic">Bu zorlukta yeni görev</span><span class="only-ai">Yapay zeka modunda yeni tur</span></button>
       </div>`;
+  } else if (S.R.ai) {
+    const ids = S.aiLife.disc.map(n => AIW.byName.get(normName(n))).filter(id => id !== undefined);
+    const cells = ids.sort((a, b) => AIW.items[a].n.localeCompare(AIW.items[b].n, 'tr'))
+      .map(id => `<div>${iconHTML(AIW.items[id])}<span>${esc(AIW.items[id].n)}</span></div>`).join('');
+    body = `
+      <p>Yapay zeka dünyasında keşfettiğin öğeler: <b style="color:var(--text)">${fmt(ids.length)}</b>. Dünyada şimdiye dek ${fmt(AIW.items.length)} öğe ve ${fmt(AIW.rec.size)} birleşim üretildi.</p>
+      <div class="encyclo">${cells || '<div style="grid-column:1/-1">Henüz keşif yok.</div>'}</div>
+      <div class="modal-btns"><button class="btn ghost" data-act="close">Kapat</button><button class="btn danger" data-act="wipe">Dünyayı sıfırla</button></div>`;
   } else {
     const disc = S.life.disc.filter(n => ITEMS.some(it => it.n === n));
     const byName = new Map(ITEMS.map((it, i) => [it.n, i]));
@@ -576,20 +809,77 @@ function openMenu(tab = 'game') {
     <div class="tabs"><button data-tab="game" class="${tab === 'game' ? 'on' : ''}">Oyun</button><button data-tab="enc" class="${tab === 'enc' ? 'on' : ''}">Ansiklopedi</button></div>
     ${body}`, {
     close: () => hideModal(),
-    restart: () => { if (!S.R.won && (S.R.attempts || S.R.hints)) countLoss(); newRound(); },
+    restart: () => {
+      if (S.settings.ai && !aiReady()) {
+        const cfg = $('#aiCfg');
+        cfg.classList.remove('attn'); void cfg.offsetWidth; cfg.classList.add('attn');
+        const inp = $('#aiKey');
+        if (inp) inp.focus();
+        return;
+      }
+      if (!S.R.won && (S.R.attempts || S.R.hints)) countLoss();
+      newRound();
+    },
+    toggleAI: () => {
+      S.settings.ai = !S.settings.ai;
+      saveSettings();
+      $('.ai-toggle').classList.toggle('on', S.settings.ai);
+      $('#modalCard').classList.toggle('ai-on', S.settings.ai);
+    },
+    toggleSound: () => {
+      S.settings.sound = !S.settings.sound;
+      saveSettings();
+      $('.snd-toggle').classList.toggle('on', S.settings.sound);
+      if (S.settings.sound) chime();
+    },
+    saveKey: () => {
+      S.aiKey = $('#aiKey').value.trim();
+      store.set('aikey', { k: S.aiKey });
+      const st = $('#aiKeyState');
+      st.textContent = S.aiKey ? 'Kaydedildi; bu tarayıcıda kayıtlı anahtar kullanılacak.' : 'Anahtar silindi.';
+      st.classList.toggle('ok', !!S.aiKey);
+    },
     reset: () => {
       S.life = { rounds: 0, wins: 0, total: 0, best: 0, streak: 0, disc: [], recent: [] };
       S.lifeDisc = new Set();
       saveLife();
       openMenu('enc');
     },
+    wipe: () => modal(`
+      <h3>Yapay zeka dünyası silinsin mi?</h3>
+      <p>Şimdiye dek üretilen ${fmt(AIW.items.length - AIW.base.length)} öğe ve ${fmt(AIW.rec.size)} birleşim silinir; birleşimler baştan, yeniden üretilir. Bu geri alınamaz.</p>
+      <div class="modal-btns">
+        <button class="btn ghost" data-act="back">Vazgeç</button>
+        <button class="btn danger" data-act="yes">Dünyayı sil</button>
+      </div>`, {
+      back: () => openMenu('enc'),
+      yes: () => {
+        AIE.reset();
+        AIW.reset();
+        S.aiLife.disc = [];
+        S.aiDisc = new Set();
+        saveAiLife();
+        newRound();
+      },
+    }),
   }, true);
+  $('#modalCard').classList.toggle('ai-on', tab === 'game' ? !!S.settings.ai : !!S.R.ai);
+  // Sunucu durumu değişmiş olabilir (ör. .env sonradan eklendi)
+  if (tab === 'game') {
+    AIEngine.info().then((inf) => {
+      if (JSON.stringify(inf) === JSON.stringify(S.aiInfo)) return;
+      S.aiInfo = inf;
+      const cfg = $('#aiCfg');
+      if (cfg) cfg.innerHTML = aiConfigHTML();
+    });
+  }
 }
 
 function wireUI() {
   $('#btnHint').onclick = doHint;
   $('#btnGiveUp').onclick = giveUp;
   $('#btnMenu').onclick = () => { if (!S.busy) openMenu('game'); };
+  $('#brand').onclick = () => { if (!S.busy) openMenu('game'); };
   $('#zoomIn').onclick = () => ws.zoomBy(1.25);
   $('#zoomOut').onclick = () => ws.zoomBy(0.8);
   $('#zoomFit').onclick = () => ws.fit();
@@ -611,6 +901,9 @@ function wireUI() {
       return;
     }
     if (e.target === $('#modal') && !S.busy) hideModal();
+  });
+  $('#modal').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.id === 'aiKey' && modalActions && modalActions.saveKey) modalActions.saveKey();
   });
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('#modal').classList.contains('hidden')) hideModal();

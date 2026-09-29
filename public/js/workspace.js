@@ -1,15 +1,17 @@
 // Serbest birleştirme alanı: kaydırma, yakınlaştırma, sürükle-bırak, silme, kopyalama.
-import { tween, easeOut } from './anim.js';
+import { tween } from './anim.js';
 
 const HIT = 42;          // birleştirme için merkezler arası azami uzaklık (dünya px)
 const GRID = 28;
 
 export class Workspace {
-  constructor({ board, world, links, render, onCombine, onView }) {
+  // judge(sürüklenen, hedef) → 'ok' (birleşir) | 'no' (birleşmez) | 'wait' (henüz bilinmiyor)
+  constructor({ board, world, links, render, judge, onCombine, onView }) {
     this.board = board;
     this.world = world;
     this.links = links;
     this.render = render;
+    this.judge = judge;
     this.onCombine = onCombine;
     this.onView = onView;
     this.insts = new Map();
@@ -137,7 +139,7 @@ export class Workspace {
     for (const i of this.insts.values()) i.el.remove();
     this.insts.clear();
     this.links.innerHTML = '';
-    this.world.querySelectorAll('.burst, .nope').forEach(e => e.remove());
+    this.world.querySelectorAll('.burst, .glow').forEach(e => e.remove());
     this.hover = null;
   }
 
@@ -151,11 +153,19 @@ export class Workspace {
     return best;
   }
 
-  setHover(inst) {
-    if (this.hover === inst) return;
-    if (this.hover) this.hover.el.classList.remove('target');
+  // Hedef çerçevesi: yeşil birleşir, kırmızı birleşmez, mavi yapay zeka düşünüyor.
+  setHover(inst, item) {
+    const state = inst ? (this.judge ? this.judge(item, inst.item) : 'ok') : null;
+    if (this.hover === inst && this.hoverState === state) return;
+    if (this.hover) this.hover.el.classList.remove('target', 'ok', 'no', 'wait');
     this.hover = inst;
-    if (inst) inst.el.classList.add('target');
+    this.hoverItem = item;
+    this.hoverState = state;
+    if (inst) inst.el.classList.add('target', state);
+  }
+
+  refreshHover() {
+    if (this.hover) this.setHover(this.hover, this.hoverItem);
   }
 
   // Görünür alanda, verilen öğenin (tercihen merkeze yakın) bir örneği
@@ -220,24 +230,19 @@ export class Workspace {
     setTimeout(() => b.remove(), 700);
   }
 
-  reject(drag, target) {
-    let dx = drag.x - target.x, dy = drag.y - target.y;
-    const d = Math.hypot(dx, dy) || 1;
-    if (d < 4) { dx = 1; dy = 0.3; }
-    const len = Math.hypot(dx, dy);
-    const to = { x: target.x + (dx / len) * 88, y: target.y + (dy / len) * 70 };
-    tween(260, (e) => this.moveTo(drag, drag.x + (to.x - drag.x) * e, drag.y + (to.y - drag.y) * e), easeOut);
-    for (const i of [drag, target]) {
-      i.el.classList.remove('shake'); void i.el.offsetWidth; i.el.classList.add('shake');
-      setTimeout(() => i.el.classList.remove('shake'), 420);
-    }
-    const n = document.createElement('div');
-    n.className = 'nope';
-    n.textContent = 'Bir şey olmadı';
-    n.style.left = target.x + 'px';
-    n.style.top = (target.y - 44) + 'px';
-    this.world.appendChild(n);
-    setTimeout(() => n.remove(), 850);
+  // Yeni keşifte öğenin arkasında bir anlık ışık halkası
+  glow(x, y) {
+    const g = document.createElement('div');
+    g.className = 'glow';
+    g.style.transform = `translate(${x}px, ${y}px)`;
+    this.world.appendChild(g);
+    setTimeout(() => g.remove(), 1000);
+  }
+
+  // Sonucu sonradan gelen (yapay zeka) birleşmeyen çift için kısa kırmızı parıltı
+  nope(inst) {
+    inst.el.classList.remove('nope-flash'); void inst.el.offsetWidth; inst.el.classList.add('nope-flash');
+    setTimeout(() => inst.el.classList.remove('nope-flash'), 650);
   }
 
   // ——— Olaylar ———
@@ -325,7 +330,7 @@ export class Workspace {
       if (!moved) { moved = true; inst.el.classList.add('dragging'); }
       const q = this.toWorld(ev.clientX, ev.clientY);
       this.moveTo(inst, q.x + ox, q.y + oy);
-      this.setHover(this.hitTest(inst.x, inst.y, inst));
+      this.setHover(this.hitTest(inst.x, inst.y, inst), inst.item);
     };
     const up = () => {
       window.removeEventListener('pointermove', move);

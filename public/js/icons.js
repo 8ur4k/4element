@@ -80,8 +80,9 @@ function tileStyle(c) {
   return s;
 }
 
-// it: { g, b, c, v }
+// it: { g, b, c, v } — glifi olmayan (yapay zekanın ürettiği) öğeler: { e (emoji), c }
 export function iconHTML(it, cls = '') {
+  if (!it.g) return `<div class="ico emo${cls ? ' ' + cls : ''}" style="${tileStyle(it.c)}"><span class="em">${it.e || '✨'}</span></div>`;
   const v = it.v ? ` v${((it.v - 1) % 8) + 1}` : '';
   let h = `<div class="ico${v}${cls ? ' ' + cls : ''}" style="${tileStyle(it.c)}">${glyphSVG(it.g)}`;
   if (it.b) h += `<span class="bdg">${glyphSVG(it.b)}</span>`;
