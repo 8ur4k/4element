@@ -3,7 +3,7 @@ import { Solver } from './solver.js';
 import { iconHTML, uiIcon } from './icons.js';
 import { Workspace } from './workspace.js';
 import { showTree, hideTree } from './tree.js';
-import { Hand, sleep } from './anim.js';
+import { sleep } from './anim.js';
 import { AIWorld, AIEngine, AI_CATS, KINDS, pairKey, normName } from './ai.js';
 import { chime, unlockAudio } from './sfx.js';
 
@@ -26,7 +26,7 @@ const store = {
 };
 
 // ITEMS/N/CATS o anki moda göre ya külliyatı ya da yapay zeka dünyasını gösterir.
-let LIB, SOLVER, ITEMS, N, CATS, ws, hand, AIW, AIE;
+let LIB, SOLVER, ITEMS, N, CATS, ws, AIW, AIE;
 const S = {
   settings: store.get('settings', { diff: 'orta', sort: 'order', ai: false, sound: true }),
   life: store.get('life', { rounds: 0, wins: 0, total: 0, best: 0, streak: 0, disc: [], recent: [] }),
@@ -54,7 +54,6 @@ async function boot() {
   CATS = LIB.cats;
   SOLVER = new Solver(N, LIB.recipes);
   S.lifeDisc = new Set(S.life.disc);
-  S.aiDisc = new Set(S.aiLife.disc);
 
   // Yapay zeka dünyası: adı külliyatta geçen öğeler külliyatın ikonunu giyer, diğerleri emoji.
   const corpus = new Map(LIB.items.map(it => [normName(it.n), it]));
@@ -64,6 +63,9 @@ async function boot() {
     return it;
   };
   AIW = new AIWorld(LIB.base.map(id => LIB.items[id]), decorate);
+  // Dünyadan ayıklanmış (ör. adı bozuk) öğeler keşif geçmişinden de düşer
+  S.aiLife.disc = S.aiLife.disc.filter(n => AIW.byName.has(normName(n)));
+  S.aiDisc = new Set(S.aiLife.disc);
   AIE = new AIEngine(AIW, {
     ctx: aiCtx,
     key: () => S.aiKey,
@@ -88,7 +90,6 @@ async function boot() {
   $('#searchIco').innerHTML = uiIcon('search');
   $('#skipAnim').innerHTML = `${uiIcon('skip')}Atla`;
 
-  hand = new Hand($('#hand'));
   ws = new Workspace({
     board: $('#board'),
     world: $('#world'),
@@ -650,68 +651,20 @@ async function doHint() {
   R.hints++;
   bump('stHints');
   updateStats();
+  // İki öğe görünen alanın ortasında belirir, hızla birbirine girip sonucu oluşturur
   S.busy = true;
   ws.locked = true;
-  $('#blocker').classList.remove('hidden');
   try {
-    const hb = $('#btnHint').getBoundingClientRect();
-    hand.show(hb.left + hb.width / 2, hb.bottom + 8);
-    await sleep(120);
-    let A = ws.findVisible(s.a);
-    if (!A) A = await dragFromInventory(s.a, ws.freeSpot(), null);
-    let B = ws.findVisible(s.b, A);
-    if (B) await dragInstance(B, A);
-    else B = await dragFromInventory(s.b, { x: A.x, y: A.y }, A);
-    ws.setHover(null);
+    const at = ws.freeSpot();
+    const A = ws.spawn(s.a, at.x - 62, at.y, { pop: true });
+    const B = ws.spawn(s.b, at.x + 62, at.y, { pop: true });
+    await sleep(220);
+    await Promise.all([ws.tween(A, at, 190), ws.tween(B, at, 190)]);
     combine(B, A, true);
-    await sleep(380);
   } finally {
-    hand.hide();
-    $('#blocker').classList.add('hidden');
-    ws.setHover(null);
     ws.locked = false;
     S.busy = false;
   }
-}
-
-async function dragFromInventory(id, dest, onto) {
-  const inv = $('#inventory');
-  let el = inv.querySelector(`.inv-item[data-id="${id}"]`);
-  if (!el) { $('#search').value = ''; renderInventory(); el = inv.querySelector(`.inv-item[data-id="${id}"]`); }
-  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  await sleep(380);
-  const r = el.getBoundingClientRect();
-  const sx = r.left + r.width / 2, sy = r.top + 30;
-  await hand.moveTo(sx, sy, 520);
-  el.classList.add('flash');
-  await hand.press();
-  const ghost = makeGhost(id);
-  moveGhost(ghost, sx, sy);
-  const to = ws.toScreen(dest.x, dest.y);
-  await hand.moveTo(to.x, to.y, 700, (x, y) => {
-    moveGhost(ghost, x, y);
-    if (onto) ws.setHover(Math.hypot(x - to.x, y - to.y) < 60 ? onto : null, id);
-  });
-  await hand.release();
-  ghost.remove();
-  el.classList.remove('flash');
-  return ws.spawn(id, dest.x, dest.y, { pop: !onto });
-}
-
-async function dragInstance(inst, onto) {
-  const s = ws.toScreen(inst.x, inst.y);
-  await hand.moveTo(s.x, s.y, 480);
-  await hand.press();
-  inst.el.classList.add('dragging');
-  inst.el.style.zIndex = ++ws.z;
-  const to = ws.toScreen(onto.x, onto.y);
-  await hand.moveTo(to.x, to.y, 650, (x, y) => {
-    const w = ws.toWorld(x, y);
-    ws.moveTo(inst, w.x, w.y);
-    ws.setHover(Math.hypot(x - to.x, y - to.y) < 60 ? onto : null, inst.item);
-  });
-  inst.el.classList.remove('dragging');
-  await hand.release();
 }
 
 // ——— Modal & menü ———

@@ -368,7 +368,6 @@ main { flex: 1; display: flex; min-height: 0; }
 .inv-item .ico { --s: 44px; }
 .inv-item span { font-size: 11.5px; text-align: center; line-height: 1.15; color: #cfd4e0; overflow-wrap: anywhere; }
 .inv-item.fresh { animation: fresh 1.6s; }
-.inv-item.flash { background: rgba(244,182,74,.18); border-color: var(--accent); }
 @keyframes fresh { 0%, 40% { background: rgba(244,182,74,.25); border-color: var(--accent); } }
 .inv-cat { grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; padding: 8px 4px 2px; }
 .inv-empty { grid-column: 1 / -1; color: var(--faint); text-align: center; padding: 30px 10px; }
@@ -534,20 +533,6 @@ main { flex: 1; display: flex; min-height: 0; }
 .tree-steps .nm { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #c7cddb; }
 .tree-steps .res { font-weight: 700; color: var(--text); max-width: 90px; }
 .tree-steps li.last .res { color: var(--accent); }
-
-/* ——— El (ipucu animasyonu) ——— */
-#blocker { position: fixed; inset: 0; z-index: 50; cursor: wait; }
-#hand {
-  position: fixed; left: 0; top: 0; z-index: 65; width: 42px; height: 42px;
-  pointer-events: none;
-  --g: #fff;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.6));
-  transition: opacity .2s;
-}
-#hand .hand-in { width: 100%; height: 100%; color: #fff; transform-origin: 30% 10%; transition: transform .15s; }
-#hand .hand-in .gl { stroke: #151821; stroke-width: 1.6; }
-#hand .hand-in .gl .s { fill: #fff; opacity: 1; }
-#hand.press .hand-in { transform: scale(.82) rotate(-8deg); }
 
 #loading { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: grid; place-content: center; justify-items: center; gap: 14px; color: var(--muted); }
 #loading.gone { opacity: 0; pointer-events: none; transition: opacity .4s; }

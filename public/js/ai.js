@@ -27,8 +27,10 @@ export const normName = (s) => String(s).toLocaleLowerCase('tr-TR')
   .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
 function cleanName(s) {
-  s = String(s || '').replace(/[“”"'`*_]/g, '').replace(/\s+/g, ' ').trim().replace(/[.,;:!?]+$/, '');
-  if (!s || s.length > 32 || !/\p{L}/u.test(s)) return null;
+  s = String(s || '');
+  if (s.includes('=')) s = s.slice(s.lastIndexOf('=') + 1);          // "A + B = C" → C
+  s = s.replace(/[“”"'`*_]/g, '').replace(/\s+/g, ' ').trim().replace(/[.,;:!?]+$/, '');
+  if (!s || s.length > 32 || /[+|]/.test(s) || !/\p{L}/u.test(s)) return null;
   return s.charAt(0).toLocaleUpperCase('tr-TR') + s.slice(1);
 }
 
@@ -153,19 +155,31 @@ export class AIWorld {
     if (now) write(); else this.saveTimer = setTimeout(write, 700);
   }
 
+  // Kayıtlı dünyayı yükler. Adı bozuk öğeler (ör. "Angarya + Ev = -") ve aynı adın
+  // kopyaları ayıklanır; bunlara dayanan birleşimler atılır ki yeniden üretilsin.
   load() {
     let d;
     try { d = JSON.parse(localStorage.getItem(STORE)); } catch { return; }
     if (!d || d.v !== 1) return;
-    for (const [n, e, c, k] of d.items || []) this.addItem({ n, e, c, k });
-    const n = this.items.length;
+    const map = this.base.slice();
+    let dropped = 0;
+    for (const [n, e, c, k] of d.items || []) {
+      const name = cleanName(n);
+      if (!name) { map.push(-1); dropped++; continue; }
+      const old = this.byName.get(normName(name));
+      if (old !== undefined) dropped++;
+      map.push(old !== undefined ? old : this.addItem({ n: name, e, c, k }));
+    }
     for (const [a, b, o, t, r] of d.rec || []) {
-      if (!(a < n && b < n && o < n)) continue;
-      const key = pairKey(a, b);
+      const A = map[a], B = map[b], O = o < 0 ? -1 : map[o];
+      if (A === undefined || B === undefined || O === undefined || A < 0 || B < 0) { dropped++; continue; }
+      if (o >= 0 && (O < 0 || O === A || O === B)) { dropped++; continue; }
+      const key = pairKey(A, B);
       if (this.rec.has(key)) continue;
-      this.rec.set(key, { a, b, o, t, r: r || '' });
+      this.rec.set(key, { a: A, b: B, o: O, t, r: r || '' });
       this.log.push(key);
     }
+    if (dropped) this.save(true);
   }
 }
 

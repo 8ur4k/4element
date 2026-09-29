@@ -28,7 +28,7 @@ Sonra tarayıcıda: http://localhost:3000
 | Kopyala | Çift tık |
 | İpucu | **İpucu** düğmesi ya da `H` |
 
-- **İpucu**: Elindeki öğelerle hedefe bir adım yaklaştıran birleştirmeyi, sanal bir el sürükleyip bırakıyormuş gibi senin yerine yapar. Sınırsızdır ama her ipucu tur puanını %20 azaltır.
+- **İpucu**: Elindeki öğelerle hedefe bir adım yaklaştıran birleştirmeyi senin yerine yapar: iki öğe alanın ortasında belirir ve hızla birleşir. Sınırsızdır ama her ipucu tur puanını %20 azaltır.
 - **Pes Et**: İki seçenek sunar: doğrudan *Yeni görev* ya da *Çözüme bak*. Çözüm önce 4 elementten hedefe hızlı bir animasyonla oynatılır, ardından incelenebilir (kaydır/yakınlaştır) bir **çözüm ağacı** ve adım adım liste açılır. *Sıradaki görev* ile devam edilir.
 - **Zorluk** (menü): Kolay (3–6 adım), Orta (7–12), Zor (13–20), Efsane (21+), Karışık.
 - **Çerçeve renkleri**: Bir öğeyi diğerinin üstüne getirince sonuç hemen belli olur: **yeşil** bu turda yeni bir şey çıkar, **mavi** zaten bulduğun bir şey çıkar, **kırmızı** birleşmezler. Kırmızıyken bırakırsan öğe olduğu yerde kalır, deneme sayılmaz.
