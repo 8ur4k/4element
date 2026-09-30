@@ -26,14 +26,17 @@ const store = {
 };
 
 // ITEMS/N/CATS o anki moda göre ya külliyatı ya da yapay zeka dünyasını gösterir.
-let LIB, SOLVER, ITEMS, N, CATS, ws, AIW, AIE;
+let LIB, SOLVER, ITEMS, N, CATS, ws, AIW, AIE, GOALS;
+// Yapay zeka modunda hedef havuzu: külliyatta en az bu kadar adım uzaktaki öğeler
+const AI_GOAL_MIN = 35;
 const S = {
   settings: store.get('settings', { diff: 'orta', sort: 'order', ai: false, sound: true }),
   life: store.get('life', { rounds: 0, wins: 0, total: 0, best: 0, streak: 0, disc: [], recent: [] }),
   lifeDisc: null,
-  aiLife: store.get('ailife', { disc: [] }),
+  aiLife: store.get('ailife', { disc: [], recent: [], rounds: 0, wins: 0 }),
   aiDisc: null,
   aiKey: store.get('aikey', { k: '' }).k,
+  aiNext: store.get('ainext', { n: '' }).n,   // arka planda seçilmiş sıradaki hedef
   aiInfo: null,
   R: null,
   busy: false,
@@ -66,6 +69,7 @@ async function boot() {
   // Dünyadan ayıklanmış (ör. adı bozuk) öğeler keşif geçmişinden de düşer
   S.aiLife.disc = S.aiLife.disc.filter(n => AIW.byName.has(normName(n)));
   S.aiDisc = new Set(S.aiLife.disc);
+  GOALS = LIB.items.filter(it => it.s >= AI_GOAL_MIN && it.n.length <= 24 && !it.n.includes('('));
   AIE = new AIEngine(AIW, {
     ctx: aiCtx,
     key: () => S.aiKey,
@@ -74,6 +78,8 @@ async function boot() {
     onError: (err) => note(`Yapay zeka yanıt vermedi: ${err.message}`, 'err'),
   });
   S.aiInfo = await AIEngine.info();
+  // İlk yapay zeka turu da seçilmiş bir hedefle başlasın (en çok birkaç saniye beklenir)
+  if (S.settings.ai && aiReady() && !S.aiNext) await Promise.race([prepareNextGoal(), sleep(5000)]);
   unlockAudio();
 
   $('#logo').innerHTML = LIB.base.map(id => iconHTML(ITEMS[id])).join('');
@@ -129,16 +135,49 @@ function pickTarget() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// Yapay zeka modu hedefi: külliyatta derin öğelerden rastgele 10 aday çekilir, model bunlardan
+// dört elementten ulaşması en çok uğraştıracak olanı seçer. Seçim bir önceki tur başlarken
+// arka planda yapılır. Külliyat yalnızca ad ve ikon için kullanılır; birleşimleri yapay zeka üretir.
+function goalPool(exclude = '') {
+  const recent = new Set(S.aiLife.recent);
+  const pool = GOALS.filter(it => !recent.has(it.n) && it.n !== exclude);
+  return pool.length ? pool : GOALS;
+}
+
+let goalReq = null;
+function prepareNextGoal() {
+  if (goalReq) return goalReq;
+  const pool = goalPool(S.R && S.R.goal ? S.R.goal.n : '');
+  const cands = [];
+  while (cands.length < Math.min(10, pool.length)) {
+    const it = pool[Math.floor(Math.random() * pool.length)];
+    if (!cands.includes(it)) cands.push(it);
+  }
+  goalReq = AIE.chooseGoal(cands.map(it => it.n))
+    .then((i) => { S.aiNext = cands[i >= 0 ? i : 0].n; store.set('ainext', { n: S.aiNext }); })
+    .catch(() => {})
+    .finally(() => { goalReq = null; });
+  return goalReq;
+}
+
+function pickAIGoal() {
+  const pool = goalPool();
+  let goal = S.aiNext && pool.find(it => it.n === S.aiNext);
+  if (!goal) goal = pool[Math.floor(Math.random() * pool.length)];
+  S.aiNext = '';
+  store.set('ainext', { n: '' });
+  return goal;
+}
+
 function setMode(ai) {
   ITEMS = ai ? AIW.items : LIB.items;
   N = ITEMS.length;
   CATS = ai ? AI_CATS : LIB.cats;
   document.body.classList.toggle('ai', ai);
   $('#brandSub').textContent = ai ? 'yapay zeka modu' : 'simya külliyatı';
-  $('#questLabel').textContent = ai ? 'YAPAY ZEKA MODU' : 'GÖREV';
+  $('#questLabel').textContent = ai ? 'GÖREV · YAPAY ZEKA' : 'GÖREV';
   $('#stScoreLbl').textContent = ai ? 'Dünya' : 'Olası puan';
-  $('#btnGiveUp').classList.toggle('danger', !ai);
-  $('#btnGiveUp').innerHTML = ai ? `${uiIcon('refresh')}<span>Yeni tur</span>` : `${uiIcon('flag')}<span>Pes Et</span>`;
+  $('#btnGiveUp').innerHTML = `${uiIcon('flag')}<span>Pes Et</span>`;
   if (ai) AIE.start(); else AIE.stop();
 }
 
@@ -155,8 +194,13 @@ function newRound() {
   const base = ai ? AIW.base : LIB.base;
   const round = { found: [...base], foundSet: new Set(base), tried: new Set(), attempts: 0, hints: 0, over: false, won: false };
   if (ai) {
-    // Serbest keşif: hedef ve puan yok, tur sonsuz
-    S.R = { ...round, ai: true, target: -1, opt: 0, counted: true };
+    // Hedef dünyada henüz olmayabilir; bulunduğu an adından tanınır
+    const goal = pickAIGoal();
+    S.R = { ...round, ai: true, target: -1, goal, goalKey: normName(goal.n), opt: 0, counted: false };
+    S.aiLife.recent.push(goal.n);
+    if (S.aiLife.recent.length > 60) S.aiLife.recent.splice(0, S.aiLife.recent.length - 60);
+    saveAiLife();
+    prepareNextGoal();
   } else {
     const target = pickTarget();
     S.R = { ...round, ai: false, target, opt: ITEMS[target].s, counted: false };
@@ -178,8 +222,8 @@ function newRound() {
 function renderQuest() {
   const R = S.R;
   if (R.ai) {
-    $('#questIcon').innerHTML = iconHTML({ g: 'wand', b: 'sparkle', c: '#6f7cf2' });
-    $('#questName').textContent = 'Serbest keşif';
+    $('#questIcon').innerHTML = iconHTML(R.goal);
+    $('#questName').textContent = R.goal.n;
     renderAIMeta();
     return;
   }
@@ -194,7 +238,7 @@ function renderQuest() {
 let aiSt = { ready: 0, busy: false }, metaQueued = false;
 function renderAIMeta() {
   if (!S.R || !S.R.ai) return;
-  $('#questMeta').innerHTML = `dünyada ${fmt(AIW.items.length)} öğe · <span class="ai-st${aiSt.busy ? ' busy' : ''}"><i></i>${aiSt.ready} birleşim hazır</span>`;
+  $('#questMeta').innerHTML = `yol bilinmiyor · dünyada ${fmt(AIW.items.length)} öğe · <span class="ai-st${aiSt.busy ? ' busy' : ''}"><i></i>${aiSt.ready} birleşim hazır</span>`;
 }
 function scheduleMeta() {
   if (metaQueued) return;
@@ -264,6 +308,8 @@ function countTry(key, fromHint) {
   if (!fromHint) { R.attempts++; bump('stAttempts'); }
 }
 
+const isGoal = (o) => (S.R.ai ? normName(ITEMS[o].n) === S.R.goalKey : o === S.R.target);
+
 function merge(d, t, outs, info) {
   const R = S.R;
   const x = t.x, y = t.y;
@@ -279,7 +325,7 @@ function merge(d, t, outs, info) {
     const inst = ws.spawn(o, ox, y, { pop: true, isNew });
     made.push(inst);
     if (isNew) { fresh = true; discover(o, d.item, t.item, info); }
-    if (o === R.target && !R.over) { inst.el.classList.add('goal'); win(); }
+    if (isGoal(o) && !R.over) { inst.el.classList.add('goal'); win(); }
   });
   if (fresh && S.settings.sound) chime();
   updateStats();
@@ -353,7 +399,7 @@ function aiCtx() {
   const board = [];
   for (const i of ws.insts.values()) board.push(i.item);
   board.reverse();                     // en son konanlar önce
-  return { found: R.found, board, tried: R.tried };
+  return { found: R.found, board, tried: R.tried, target: R.goal.n };
 }
 
 function aiResult() {
@@ -457,10 +503,15 @@ function win() {
   const sc = scoreNow();
   if (!R.counted) {
     R.counted = true;
-    S.life.rounds++; S.life.wins++; S.life.streak++;
-    S.life.total += sc.total;
-    S.life.best = Math.max(S.life.best, sc.total);
-    saveLife();
+    if (R.ai) {
+      S.aiLife.rounds++; S.aiLife.wins++;
+      saveAiLife();
+    } else {
+      S.life.rounds++; S.life.wins++; S.life.streak++;
+      S.life.total += sc.total;
+      S.life.best = Math.max(S.life.best, sc.total);
+      saveLife();
+    }
   }
   $('#quest').classList.add('won');
   $('#btnGiveUp').innerHTML = `${uiIcon('play')}<span>Sıradaki</span>`;
@@ -468,7 +519,23 @@ function win() {
 }
 
 function showWin(sc) {
-  const R = S.R, t = ITEMS[R.target];
+  const R = S.R;
+  if (R.ai) {
+    modal(`
+      <div class="modal-hero">${iconHTML(R.goal)}<div><small class="win-title">GÖREV TAMAMLANDI</small><b>${esc(R.goal.n)}</b></div></div>
+      <div class="score-rows">
+        <div>Denediğin farklı birleşim <b>${R.attempts}</b></div>
+        <div>Bu turdaki keşif <b>${R.found.length - AIW.base.length}</b></div>
+        <div>Kullanılan ipucu <b>${R.hints}</b></div>
+      </div>
+      <p style="margin-top:12px">Yapay zeka modunda bulunan hedef: <b style="color:var(--text)">${S.aiLife.wins}</b> / ${S.aiLife.rounds} tur</p>
+      <div class="modal-btns">
+        <button class="btn ghost" data-act="close">Alanda kal</button>
+        <button class="btn ok" data-act="next">Sıradaki hedef ${uiIcon('play')}</button>
+      </div>`, { close: () => hideModal(), next: () => newRound() });
+    return;
+  }
+  const t = ITEMS[R.target];
   modal(`
     <div class="modal-hero">${iconHTML(t)}<div><small class="win-title">GÖREV TAMAMLANDI</small><b>${esc(t.n)}</b></div></div>
     <div class="score-rows">
@@ -492,19 +559,18 @@ function showWin(sc) {
 function giveUp() {
   if (S.busy) return;
   const R = S.R;
+  if (R.over) { newRound(); return; }
   if (R.ai) {
-    const n = R.found.length - AIW.base.length;
-    if (!n) { newRound(); return; }
     modal(`
-      <h3>Yeni tur?</h3>
-      <p>Bu turda <b style="color:var(--text)">${n}</b> keşif yaptın. Yeni turda 4 elementle baştan başlarsın; yapay zekanın kurduğu dünya korunur, aynı birleşimler yine aynı sonucu verir.</p>
+      <div class="modal-hero">${iconHTML(R.goal)}<div><small>HEDEF</small><b>${esc(R.goal.n)}</b></div></div>
+      <h3>Pes mi ediyorsun?</h3>
+      <p>Yapay zeka modunda hedefe giden yol önceden bilinmediği için çözüm gösterilemez. Yeni bir hedefle yeni tura geçersin; yapay zekanın kurduğu dünya korunur, aynı birleşimler yine aynı sonucu verir.</p>
       <div class="modal-btns">
         <button class="btn ghost" data-act="close">Vazgeç, devam et</button>
-        <button class="btn primary" data-act="new">${uiIcon('refresh')}Yeni tur</button>
-      </div>`, { new: () => newRound(), close: () => hideModal() });
+        <button class="btn primary" data-act="new">${uiIcon('refresh')}Yeni hedef</button>
+      </div>`, { new: () => { countLoss(); newRound(); }, close: () => hideModal() });
     return;
   }
-  if (R.over) { newRound(); return; }
   const t = ITEMS[R.target];
   modal(`
     <div class="modal-hero">${iconHTML(t)}<div><small>HEDEF</small><b>${esc(t.n)}</b></div></div>
@@ -526,8 +592,13 @@ function countLoss() {
   if (R.counted) return;
   R.counted = true;
   R.over = true;
-  S.life.rounds++; S.life.streak = 0;
-  saveLife();
+  if (R.ai) {
+    S.aiLife.rounds++;
+    saveAiLife();
+  } else {
+    S.life.rounds++; S.life.streak = 0;
+    saveLife();
+  }
   updateStats();
 }
 
@@ -622,9 +693,18 @@ function openTree(steps, fromGiveUp) {
 }
 
 // ——— İpucu ———
-// Yapay zeka modunda ipucu: hazırda bekleyen, denenmemiş ve yeni bir öğe veren birleşim
+// Yapay zeka modunda ipucu: hedef dünyada zaten ortaya çıkmışsa ve bilinen birleşimlerle
+// ulaşılabiliyorsa ona doğru bir adım; değilse hazırda bekleyen, denenmemiş ve yeni bir öğe
+// veren herhangi bir birleşim.
 function aiHintStep() {
   const R = S.R, f = R.found;
+  const g = AIW.byName.get(R.goalKey);
+  if (g !== undefined) {
+    const flat = [];
+    for (const r of AIW.rec.values()) if (r.o >= 0) flat.push(r.a, r.b, r.o);
+    const steps = new Solver(AIW.items.length, flat).plan(g, f);
+    if (steps && steps.length) return steps[0];
+  }
   for (let i = f.length - 1; i >= 0; i--) {
     for (let j = i; j >= 0; j--) {
       const k = pairKey(f[i], f[j]);
@@ -705,7 +785,7 @@ function openMenu(tab = 'game') {
       <div class="menu-section"><h4>Oyun modu</h4>
         <button class="toggle-row ai-toggle ${S.settings.ai ? 'on' : ''}" data-act="toggleAI">
           <span class="tr-ico">${uiIcon('wand')}</span>
-          <span class="tr-txt"><b>Yapay zeka modu</b><small>Hazır külliyat yerine her birleşimi yapay zeka (DeepSeek) o an üretir. Hedef yok; açık uçlu, sonsuz keşif.</small></span>
+          <span class="tr-txt"><b>Yapay zeka modu</b><small>Hazır külliyat yerine her birleşimi yapay zeka (DeepSeek) üretir. Hedef zorlu ve rastgeledir; yolu kimse önceden bilmez.</small></span>
           <span class="switch"></span>
         </button>
         <div class="ai-cfg only-ai" id="aiCfg">${aiConfigHTML()}</div>
@@ -727,14 +807,15 @@ function openMenu(tab = 'game') {
           <div><b>${fmt(S.aiLife.disc.length)}</b><span>keşfettiğin</span></div>
           <div><b>${fmt(AIW.items.length)}</b><span>dünyadaki öğe</span></div>
           <div><b>${fmt(AIW.rec.size)}</b><span>üretilen birleşim</span></div>
-          <div><b>${S.R.ai ? fmt(S.R.found.length - AIW.base.length) : '–'}</b><span>bu turdaki keşif</span></div>
+          <div><b>${S.aiLife.wins}/${S.aiLife.rounds}</b><span>bulunan hedef</span></div>
         </div>
       </div>
       <div class="menu-section"><h4>Nasıl oynanır?</h4>
         <ul class="help-list">
           <li class="only-classic">Her turda külliyattan rastgele bir <b>hedef</b> seçilir. Ateş, Su, Toprak ve Hava ile başlarsın.</li>
-          <li class="only-ai">Ateş, Su, Toprak ve Hava ile başlarsın. Hazır külliyat yok: her birleşimi yapay zeka o an üretir. Hedef ve puan yok, istediğin kadar keşfet.</li>
-          <li class="only-ai">Sonuç şu öncelikle bulunur: <b>1)</b> gerçek birleşim, <b>2)</b> ikisinin ortak noktası, <b>3)</b> kelime oyunu ya da espri. Hiçbiri makul değilse birleşmezler. Sonuç bir nesne olduğu kadar bir kişi, yer, kavram ya da eylem de olabilir.</li>
+          <li class="only-ai">Ateş, Su, Toprak ve Hava ile başlarsın. Hazır külliyat yok: her birleşimi yapay zeka üretir.</li>
+          <li class="only-ai">Her turda rastgele ve zorlu bir <b>hedef</b> seçilir. Yapay zeka hedefi bilir ama sana asla yardım etmez; hedef ancak bir birleşimin doğal sonucu olduğunda ortaya çıkar. Yol önceden bilinmez, genelde onlarca birleşim gerekir.</li>
+          <li class="only-ai">Sonuç bariz bir birleşimse odur; değilse ikisinin ortak noktası, çağrıştırdığı şey ya da bir kelime oyunu aranır. Hiçbiri makul değilse birleşmezler. Sonuç bir nesne olduğu kadar bir kişi, yer, kavram ya da eylem de olabilir.</li>
           <li class="only-ai">Üretilen dünya kalıcıdır: aynı ikili hep aynı sonucu verir. Yapay zeka sıradaki olası birleşimleri arka planda önceden hazırlar.</li>
           <li>Sağdaki keşiflerden öğeleri ortadaki alana sürükle; bir öğeyi diğerinin üstüne bırakınca birleşirler.</li>
           <li>Bir öğeyi diğerinin üstüne getirdiğinde çerçeve rengi sonucu hemen söyler: <b class="c-ok">yeşil</b> bu turda yeni bir şey çıkar, <b class="c-old">mavi</b> zaten bulduğun bir şey çıkar, <b class="c-no">kırmızı</b> birleşmezler<span class="only-ai">; <b class="c-wait">gri</b> ise sonuç henüz hazırlanıyor demektir</span>. Birleşmeyen öğe bıraktığın yerde kalır ve deneme sayılmaz.</li>
@@ -742,7 +823,7 @@ function openMenu(tab = 'game') {
           <li><kbd>Sağ tık</kbd> öğeyi siler, <kbd>çift tık</kbd> kopyalar. Keşiflerdeki bir öğeye tıklamak onu alana koyar.</li>
           <li class="only-classic">Puan: hedefin derinliği × verimlilik (en kısa yol ÷ yaptığın farklı birleşim) × ipucu cezası (her ipucu puanı %20 azaltır).</li>
           <li class="only-classic"><b>İpucu</b> (<kbd>H</kbd>), elindekilerle hedefe bir adım yaklaştıran birleştirmeyi senin yerine yapar.</li>
-          <li class="only-ai"><b>İpucu</b> (<kbd>H</kbd>), sana yeni bir şey kazandıracak, henüz denemediğin bir birleşimi senin yerine yapar.</li>
+          <li class="only-ai"><b>İpucu</b> (<kbd>H</kbd>), sana yeni bir şey kazandıracak, henüz denemediğin bir birleşimi senin yerine yapar. Hedef dünyada bir kez ortaya çıkmışsa ipucu ona doğru ilerler.</li>
         </ul>
       </div>
       <div class="modal-btns">
@@ -785,6 +866,7 @@ function openMenu(tab = 'game') {
     toggleAI: () => {
       S.settings.ai = !S.settings.ai;
       saveSettings();
+      if (S.settings.ai && aiReady() && !S.aiNext) prepareNextGoal();
       $('.ai-toggle').classList.toggle('on', S.settings.ai);
       $('#modalCard').classList.toggle('ai-on', S.settings.ai);
     },

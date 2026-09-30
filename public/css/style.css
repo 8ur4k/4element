@@ -147,7 +147,6 @@ body.ai .quest-text small { color: var(--blue); }
 .ai-st i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); opacity: .8; }
 .ai-st.busy i { background: var(--blue); animation: blink 1s ease-in-out infinite; }
 @keyframes blink { 50% { opacity: .25; } }
-body.ai .btn#btnGiveUp { color: var(--text); }
 
 .stats { display: flex; gap: 6px; }
 .stat {

@@ -185,7 +185,7 @@ export class AIWorld {
 
 // ——— Üretim motoru ———
 export class AIEngine {
-  // ctx(): { found, board, tried } ya da null · key(): tarayıcıda kayıtlı anahtar
+  // ctx(): { found, board, tried, target } ya da null · key(): tarayıcıda kayıtlı anahtar
   constructor(world, { ctx, key, onResult, onStatus, onError }) {
     this.w = world;
     this.ctx = ctx;
@@ -395,8 +395,11 @@ export class AIEngine {
 
     const got = new Set();
     let err = null;
+    // Turun hedefi her istekte gider: model onu yalnızca doğal olarak ortaya çıkarsa aynı adla yazar.
+    const c = this.on && this.ctx();
+    const payload = { items: w.items.map(i => i.n), history: w.canon(), pairs, target: (c && c.target) || '' };
     try {
-      await this.request({ items: w.items.map(i => i.n), history: w.canon(), pairs }, (r) => {
+      await this.request(payload, (r) => {
         if (gen !== this.gen || !pairs[r.i]) return;
         const k = keys[r.i];
         if (got.has(k)) return;
@@ -435,6 +438,17 @@ export class AIEngine {
       if (!w.rec.has(pairKey(a, b))) this.urgent(a, b);
     }
     this.poke();
+  }
+
+  // Adaylar arasından tur hedefini seçtirir; adayın sırasını ya da -1 döner.
+  async chooseGoal(names) {
+    const headers = { 'Content-Type': 'application/json' };
+    const key = this.key && this.key();
+    if (key) headers['X-DeepSeek-Key'] = key;
+    const res = await fetch('api/ai', { method: 'POST', headers, body: JSON.stringify({ goal: names }) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { pick } = await res.json();
+    return Number.isInteger(pick) ? pick : -1;
   }
 
   // Sunucuya sorar; sonuçlar geldikçe (akış) onItem ile tek tek iletilir.

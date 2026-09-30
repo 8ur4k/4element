@@ -4,7 +4,7 @@ Ateş, Su, Toprak ve Hava ile başlayıp birleştire birleştire neredeyse her �
 
 Her turda külliyattan rastgele bir **hedef** seçilir; 4 elementten yola çıkıp o hedefi en az denemeyle bulmaya çalışırsın.
 
-Bir de **yapay zeka modu** var: hazır külliyat yerine her birleşimi DeepSeek o an üretir; hedef yoktur, keşif sonsuzdur.
+Bir de **yapay zeka modu** var: hazır külliyat yerine her birleşimi DeepSeek üretir; hedef zorlu ve rastgeledir, yolu kimse önceden bilmez.
 
 ## Çalıştırma
 
@@ -47,13 +47,22 @@ Aynı ikiliyi tekrar denemek ve birleşmeyen ikililer sayılmaz; yalnızca farkl
 
 Menüden (sağ üstteki düğme ya da sol üstteki logo) **Yapay zeka modu** açılıp yeni tur başlatılır.
 
-- Her birleşimi DeepSeek (`deepseek-flash`, düşünme modu kapalı) üretir. Sonuç şu öncelikle aranır:
-  1. **Gerçek birleşim**: ikisi bir araya gelince ortaya çıkan şey (Su + Ateş = Buhar)
-  2. **Ortak nokta**: ikisinin birlikte bulunduğu yer ya da onları bağlayan şey (Kum + Deniz = Plaj, Elma + Yerçekimi = Newton)
-  3. **Kelime oyunu / espri**: bileşik kelime, deyim, kültürel gönderme (Ay + Çiçek = Ayçiçeği)
+- Her birleşimi DeepSeek (`deepseek-v4-pro`, düşünme modu kapalı) üretir. Sonuç şöyle aranır:
+  1. **Bariz birleşim**: herkesin hemen söyleyeceği tek ve açık bir sonuç varsa o (Su + Ateş = Buhar)
+  2. Yoksa **ortak nokta / çağrışım**: ikisinin birlikte bulunduğu yer ya da ikisini birden çağrıştıran şey (Kum + Deniz = Plaj, Elma + Yerçekimi = Newton, Ses + Dağ = Yankı)
+  3. ya da **kelime oyunu / espri**: bileşik kelime, deyim, kültürel gönderme (Ay + Çiçek = Ayçiçeği)
   4. Hiçbiri makul değilse birleşmez.
-- Sonuç nesne olmak zorunda değil; kişi, yer, kavram ya da eylem de olabilir. İstem, öngörülebilirliği her şeyin önüne koyar: sonucu görünce "tabii ya" denmeli.
-- Sonuç zaten var olan bir öğe de olabilir. Model her istekte dünyanın o ana kadarki tüm birleşimlerini ("kanon") ve öğe listesini görür; bilinen öğelere aynı adla döner.
+- Sonuç nesne olmak zorunda değil; kişi, yer, kavram ya da eylem de olabilir. İstem öngörülebilirliği korurken yeniliği de ister: bilinen öğelere gereksiz yere dönmemesi, "Süper Kasırga" gibi türevler yerine yeni kavramlar üretmesi, alan değiştirmesi söylenir.
+- Model her istekte dünyanın o ana kadarki tüm birleşimlerini ("kanon") ve öğe listesini görür; bilinen öğelere aynı adla döner.
+
+### Hedef
+
+- Her turda rastgele, zorlu bir hedef seçilir. Külliyatta en kısa yolu 35 adımdan uzun olan öğelerden rastgele 10 aday çekilir; model her birine "uğraştırma puanı" verir ve en zoru hedef olur (soyut, basit ya da birden fazla anlama gelen adlar elenir). Örnek hedefler: Tanker, Hollywood, Liman Vinci, Kuantum Fiziği, Hoverboard.
+- Sıradaki hedef bir önceki tur başlarken arka planda seçilir; yeni tur beklemeden başlar.
+- Külliyat yalnızca hedefin adı ve ikonu için kullanılır; birleşimlerin hepsini yapay zeka üretir.
+- Hedef her istekte modele "gizli hedef" olarak gider. Modelden hedefe ne yaklaştırması ne de ondan uzaklaştırması istenir; yalnızca bir birleşimin doğal sonucu o kavram olduğunda adını birebir aynı yazması istenir. Böylece hedef "Opera Binası" gibi eşleşmeyen bir adla ortaya çıkıp ulaşılamaz hâle gelmez.
+- Hedef bulununca tur kazanılır. Pes edersen yeni hedefe geçilir (yol önceden bilinmediği için çözüm gösterilemez).
+- İpucu, hedef dünyada bir kez ortaya çıkmışsa bilinen birleşimler üzerinden ona doğru ilerler; değilse sana yeni bir şey kazandıracak bir birleşim yapar.
 - Üretilen dünya tarayıcıda (`localStorage`) saklanır ve turlar boyunca korunur: aynı ikili hep aynı sonucu verir. Ansiklopedi sekmesinden sıfırlanabilir.
 - Öğe ikonları: adı külliyatta geçen öğeler külliyatın ikonunu kullanır, diğerleri modelin seçtiği emoji ve renkle çizilir.
 
@@ -82,7 +91,7 @@ DEEPSEEK_API_KEY=sk-...
 
 Sonra `npm start`. Anahtar sunucuda durur; tarayıcı yalnızca `/api/ai` üzerinden konuşur. Sunucuda anahtar yoksa menüdeki alana kendi anahtarını da girebilirsin (yalnızca o tarayıcıda saklanır).
 
-- `DEEPSEEK_MODEL`: modeli değiştirmek için (varsayılan `deepseek-flash`)
+- `DEEPSEEK_MODEL`: modeli değiştirmek için (varsayılan `deepseek-v4-pro`; daha ucuz ve biraz daha yavaş/basit seçenek `deepseek-flash`)
 - `DEEPSEEK_MOCK=1`: anahtarsız deneme için sahte ama tutarlı sonuçlar
 
 **Netlify**: `netlify/functions/ai.mjs` aynı `/api/ai` ucunu sunar; site ortam değişkenlerine `DEEPSEEK_API_KEY` eklemek yeterli. Bu uç herkese açıktır: siteye giren herkes senin anahtarınla üretim yapar, bakiyeni buna göre tut.
